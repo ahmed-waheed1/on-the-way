@@ -98,22 +98,6 @@ class MyAccountScreen extends HookConsumerWidget {
       );
     }
 
-    Future<void> editPhone() async {
-      final current = user?.phone ?? '';
-      final result = await showEditFieldSheet(
-        context,
-        title: 'Phone Number',
-        currentValue: current,
-        hint: '+1 234 567 8900',
-        keyboardType: TextInputType.phone,
-      );
-      if (result == null || result == current) return;
-      final ok = await ref.read(sessionProvider.notifier).updateProfile(phone: result);
-      if (ok && context.mounted) {
-        showToast(context, message: 'Phone updated', status: 'success');
-      }
-    }
-
     Future<void> editUsername() async {
       final current = user?.username ?? '';
       final result = await showEditFieldSheet(
@@ -150,9 +134,33 @@ class MyAccountScreen extends HookConsumerWidget {
       appBar: AppTopBar(
         title: 'My Account',
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
-            onPressed: () {},
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+            onSelected: (value) {
+              if (value == 'manage_roads') context.push(AppRoutes.manageRoads);
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem<String>(
+                value: 'manage_roads',
+                child: Row(
+                  children: [
+                    Icon(Icons.alt_route, size: 20.r, color: AppColors.primary),
+                    SizedBox(width: 12.w),
+                    Text(
+                      'Manage Roads',
+                      style: TextStyle(
+                        fontFamily: AppTypography.robotoFlex,
+                        fontVariations: AppTypography.regular,
+                        fontSize: 14.sp,
+                        color: AppColors.titleText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -202,7 +210,7 @@ class MyAccountScreen extends HookConsumerWidget {
                         label: 'Phone',
                         sublabel: 'Tap to change phone number',
                         sublabelIsAction: true,
-                        onTap: editPhone,
+                        onTap: () => context.push(AppRoutes.changeNumber),
                       ),
                       _AccountDivider(),
 
@@ -236,7 +244,7 @@ class MyAccountScreen extends HookConsumerWidget {
                 children: [
                   AppButton(
                     label: 'Assistance History',
-                    onPressed: () {},
+                    onPressed: () => context.push(AppRoutes.requestHistory),
                     variant: ButtonVariant.primary,
                     isFullWidth: true,
                   ),

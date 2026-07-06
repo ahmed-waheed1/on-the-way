@@ -46,6 +46,28 @@ abstract final class AppColors {
   static const Color otherBadgeBg = Color(0xFFE5E7EB);
   static const Color otherBadgeText = Color(0xFF4B5563);
 
+  // ── Request history ────────────────────────────────────────────────────────
+  static const Color requestHistoryCardBg = Color(0xFF9FD3EB);
+  static const Color dropdownPillBg = Color(0xFFEAEDF3);
+  static const Color viewDetailsLinkText = Color(0xFF185AC2);
+  static const Color requestCardDivider = Color(0xFFFFFFFF);
+
+  // ── Request status badge colours ───────────────────────────────────────────
+  static const Color statusCompletedBg = Color(0xFFDCFCE7);
+  static const Color statusCompletedText = Color(0xFF186636);
+  static const Color statusCancelledBg = Color(0xFFFEE2E2);
+  static const Color statusCancelledText = Color(0xFF991B1B);
+  static const Color statusPendingBg = Color(0xFFFEF3C7);
+  static const Color statusPendingText = Color(0xFF988724);
+  static const Color statusInProgressBg = Color(0xFFDBEAFE);
+  static const Color statusInProgressText = Color(0xFF1D4ED8);
+
+  // ── Request status accent (vivid, used on detail header) ───────────────────
+  static const Color statusCompletedAccent = Color(0xFF73EBA1);
+  static const Color statusCancelledAccent = Color(0xFFFF305D);
+  static const Color statusPendingAccent = Color(0xFFF59E0B);
+  static const Color statusInProgressAccent = Color(0xFF3B82F6);
+
   // ── Accident badge colours ─────────────────────────────────────────────────
   static const Color crashBadgeBg = Color(0xFFD1E8F2);
   static const Color crashBadgeText = Color(0xFF025D8C);

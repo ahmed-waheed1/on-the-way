@@ -3,9 +3,6 @@ import 'package:on_the_way/src/imports/packages_imports.dart';
 
 import 'package:on_the_way/src/features/auth/presentation/providers/session_provider.dart';
 
-// Map image from Figma — replace with a live map widget in production
-const _kMapImageUrl =
-    'https://www.figma.com/api/mcp/asset/255fd66c-1f73-404e-9ec0-b512eca7dfb4';
 const _kSubtitleGray = Color(0xFFB1B6B6);
 const _kCardShadow = [
   BoxShadow(
@@ -62,14 +59,14 @@ class HomePage extends HookConsumerWidget {
                     children: [
                       _ActionButton(
                         label: 'Report Accident',
-                        icon: Icons.warning_amber_outlined,
+                        icon: Icons.report_problem_outlined,
                         isPrimary: true,
-                        onTap: () => context.push(AppRoutes.nearbyAccidents),
+                        onTap: () => context.push(AppRoutes.reportAccident),
                       ),
                       SizedBox(height: 16.h),
                       _ActionButton(
                         label: 'Request Assistance',
-                        icon: Icons.build_outlined,
+                        icon: Icons.handyman_outlined,
                         isPrimary: false,
                         onTap: () => context.push(AppRoutes.needHelp),
                       ),
@@ -78,7 +75,7 @@ class HomePage extends HookConsumerWidget {
                         label: 'My Request History',
                         icon: Icons.history,
                         isPrimary: false,
-                        onTap: () {},
+                        onTap: () => context.push(AppRoutes.requestHistory),
                       ),
                     ],
                   ),
@@ -115,12 +112,11 @@ class _MapCard extends StatelessWidget {
             SizedBox(
               height: 135.h,
               width: double.infinity,
-              child: CachedNetworkImage(
-                imageUrl: _kMapImageUrl,
+              child: Image.asset(
+                AppAssets.homeHero,
                 fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    const ColoredBox(color: Color(0xFFD9D9D9)),
-                errorWidget: (_, __, ___) => ColoredBox(
+                cacheWidth: 750,
+                errorBuilder: (_, __, ___) => ColoredBox(
                   color: const Color(0xFFD9D9D9),
                   child: Center(
                     child: Icon(Icons.map_outlined,
@@ -280,13 +276,13 @@ class _BottomNavBar extends StatelessWidget {
             onTap: () {},
           ),
           _NavItem(
-            icon: Icons.warning_amber_outlined,
+            icon: Icons.report_problem_outlined,
             label: 'Accident',
             isActive: currentIndex == 1,
             onTap: () => context.push(AppRoutes.nearbyAccidents),
           ),
           _NavItem(
-            icon: Icons.build_outlined,
+            icon: Icons.handyman_outlined,
             label: 'Assistance',
             isActive: currentIndex == 2,
             onTap: () => context.push(AppRoutes.nearbyAssistance),
