@@ -1,13 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../features/auth/presentation/providers/session_provider.dart';
 import '../../../../routing/app_routes.dart';
+import '../../../../shared/helpers/show_toast.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
+import '../../data/assistance_service.dart';
 import '../providers/help_request_provider.dart';
 
 const _kStepTextColor = Color(0xFF6B7280);
@@ -21,7 +24,7 @@ const _kDescriptionTextColor = Color(0xFF6B7280);
 const _kMapImageUrl =
     'https://www.figma.com/api/mcp/asset/fa112750-fd3b-413a-a2df-c7bf44f42e79';
 
-class ReviewRequestScreen extends ConsumerWidget {
+class ReviewRequestScreen extends HookConsumerWidget {
   const ReviewRequestScreen({super.key});
 
   @override
@@ -29,6 +32,40 @@ class ReviewRequestScreen extends ConsumerWidget {
     final helpRequest = ref.watch(helpRequestProvider);
     final session = ref.watch(sessionProvider);
     final user = session.user;
+    final isSubmitting = useState(false);
+
+    Future<void> submit() async {
+      if (isSubmitting.value) return;
+      if (helpRequest.helpType == null) return;
+      if (helpRequest.latitude == null || helpRequest.longitude == null) {
+        showToast(context,
+            message: 'Please set your location before sending the request.',
+            status: 'error');
+        return;
+      }
+      if (helpRequest.image == null) {
+        showToast(context,
+            message: 'A photo is required — go back and add one.',
+            status: 'error');
+        return;
+      }
+      isSubmitting.value = true;
+      final result = await AssistanceService.instance.request(
+        type: helpRequest.helpType!.index,
+        latitude: helpRequest.latitude!,
+        longitude: helpRequest.longitude!,
+        description: helpRequest.description,
+        address: helpRequest.location,
+        contactNumber: user?.phone,
+        image: helpRequest.image,
+      );
+      isSubmitting.value = false;
+      if (!context.mounted) return;
+      result.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (_) => context.push(AppRoutes.requestSent),
+      );
+    }
 
     final issueType = helpRequest.helpType?.title ?? '-';
     final descSummary = helpRequest.imageCount > 0
@@ -119,7 +156,8 @@ class ReviewRequestScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   _ConfirmButton(
-                    onTap: () => context.push(AppRoutes.requestSent),
+                    label: isSubmitting.value ? 'Sending…' : 'Confirm',
+                    onTap: submit,
                   ),
                   SizedBox(height: 12.h),
                   _CancelButton(
@@ -389,8 +427,9 @@ class _MapImage extends StatelessWidget {
 // ── Confirm button ────────────────────────────────────────────────────────────
 
 class _ConfirmButton extends StatelessWidget {
-  const _ConfirmButton({required this.onTap});
+  const _ConfirmButton({required this.onTap, this.label = 'Confirm'});
   final VoidCallback onTap;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -405,7 +444,7 @@ class _ConfirmButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          'Confirm',
+          label,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.black,

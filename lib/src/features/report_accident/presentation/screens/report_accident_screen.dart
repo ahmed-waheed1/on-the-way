@@ -77,12 +77,19 @@ class ReportAccidentScreen extends HookConsumerWidget {
               .where((e) => e != null && e.isNotEmpty)
               .map((e) => e!)
               .toList();
-          notifier.setLocation(parts.isNotEmpty
-              ? parts.join(', ')
-              : '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}');
+          notifier.setLocation(
+            parts.isNotEmpty
+                ? parts.join(', ')
+                : '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
         } else {
           notifier.setLocation(
-              '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}');
+            '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
         }
       } catch (_) {
         if (context.mounted) {

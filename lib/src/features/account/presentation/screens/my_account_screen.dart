@@ -8,6 +8,27 @@ const _kLogoutRed = Color(0xFFFF305D);
 const _kSubtitleGray = Color(0xFF6B7280);
 const _kDividerColor = Color(0xFFE5E7EB);
 
+PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+  return PopupMenuItem<String>(
+    value: value,
+    child: Row(
+      children: [
+        Icon(icon, size: 20.r, color: AppColors.primary),
+        SizedBox(width: 12.w),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppTypography.robotoFlex,
+            fontVariations: AppTypography.regular,
+            fontSize: 14.sp,
+            color: AppColors.titleText,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class MyAccountScreen extends HookConsumerWidget {
   const MyAccountScreen({super.key});
 
@@ -140,26 +161,11 @@ class MyAccountScreen extends HookConsumerWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
             onSelected: (value) {
               if (value == 'manage_roads') context.push(AppRoutes.manageRoads);
+              if (value == 'my_requests') context.push(AppRoutes.myRequests);
             },
             itemBuilder: (_) => [
-              PopupMenuItem<String>(
-                value: 'manage_roads',
-                child: Row(
-                  children: [
-                    Icon(Icons.alt_route, size: 20.r, color: AppColors.primary),
-                    SizedBox(width: 12.w),
-                    Text(
-                      'Manage Roads',
-                      style: TextStyle(
-                        fontFamily: AppTypography.robotoFlex,
-                        fontVariations: AppTypography.regular,
-                        fontSize: 14.sp,
-                        color: AppColors.titleText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _menuItem('my_requests', Icons.receipt_long_outlined, 'My Requests'),
+              _menuItem('manage_roads', Icons.alt_route, 'Manage Roads'),
             ],
           ),
         ],

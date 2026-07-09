@@ -3,6 +3,14 @@ import 'package:on_the_way/src/imports/packages_imports.dart';
 
 import 'package:on_the_way/src/features/request_history/domain/entities/request_history_item.dart';
 
+/// The API returns image paths relative to the host (e.g. `/uploads/...`);
+/// prepend the API base URL unless it's already absolute.
+String _absolutePhotoUrl(String path) {
+  if (path.startsWith('http')) return path;
+  final base = AppConfig.baseUrl;
+  return '$base${path.startsWith('/') ? '' : '/'}$path';
+}
+
 class RequestDetailsScreen extends StatelessWidget {
   const RequestDetailsScreen({super.key, required this.item});
 
@@ -72,6 +80,12 @@ class RequestDetailsScreen extends StatelessWidget {
                           height: 20 / 14,
                         ),
                       ),
+
+                      // ── Attached photo ────────────────────────────────────
+                      if (item.imageUrl.isNotEmpty) ...[
+                        SizedBox(height: 16.h),
+                        _AttachedPhoto(url: _absolutePhotoUrl(item.imageUrl)),
+                      ],
                       SizedBox(height: 24.h),
 
                       const Divider(height: 1, thickness: 2, color: Color(0xFFE5E7EB)),
@@ -195,6 +209,39 @@ class _HeaderCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Attached photo ──────────────────────────────────────────────────────────────
+
+class _AttachedPhoto extends StatelessWidget {
+  const _AttachedPhoto({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        width: double.infinity,
+        height: 180.h,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(
+          height: 180.h,
+          color: const Color(0xFFF3F4F6),
+          alignment: Alignment.center,
+          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+        ),
+        errorWidget: (_, __, ___) => Container(
+          height: 180.h,
+          color: const Color(0xFFF3F4F6),
+          alignment: Alignment.center,
+          child: Icon(Icons.broken_image_outlined, size: 32.r, color: AppColors.distanceText),
+        ),
       ),
     );
   }

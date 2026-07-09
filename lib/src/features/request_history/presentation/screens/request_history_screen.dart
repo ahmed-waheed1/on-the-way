@@ -3,6 +3,9 @@ import 'package:on_the_way/src/imports/packages_imports.dart';
 
 import 'package:on_the_way/src/features/request_history/domain/entities/request_history_item.dart';
 import 'package:on_the_way/src/features/request_history/presentation/widgets/request_history_card.dart';
+import 'package:on_the_way/src/features/request_history/data/history_service.dart';
+import 'package:on_the_way/src/features/report_accident/data/incident_service.dart';
+import 'package:on_the_way/src/features/need_help/data/assistance_service.dart';
 
 enum _DateSort {
   newest('Newest first'),
@@ -11,54 +14,6 @@ enum _DateSort {
   const _DateSort(this.label);
   final String label;
 }
-
-final _mockHistory = [
-  RequestHistoryItem(
-    id: '1',
-    type: RequestType.assistance,
-    title: 'Flat Tire Assistance',
-    incidentType: 'Flat Tire',
-    date: DateTime(2023, 10, 24, 10, 45),
-    location: 'Sheikh Zayed Road',
-    contactNumber: '+201096504533',
-    description:
-        'My car’s bodywork is damaged on the side and I’m looking for someone who can fix it.',
-    status: RequestStatus.completed,
-  ),
-  RequestHistoryItem(
-    id: '2',
-    type: RequestType.accident,
-    title: 'Accident Report',
-    incidentType: 'Crash',
-    date: DateTime(2024, 12, 2, 14, 30),
-    location: 'Road ElFarag',
-    contactNumber: '+201096504533',
-    description: 'Two vehicles collided at the intersection, blocking the right lane.',
-    status: RequestStatus.cancelled,
-  ),
-  RequestHistoryItem(
-    id: '3',
-    type: RequestType.assistance,
-    title: 'Fuel Delivery',
-    incidentType: 'Out of Fuel',
-    date: DateTime(2024, 11, 18, 9, 5),
-    location: 'Nasr City',
-    contactNumber: '+201112223344',
-    description: 'Ran out of fuel on the highway, need a delivery as soon as possible.',
-    status: RequestStatus.inProgress,
-  ),
-  RequestHistoryItem(
-    id: '4',
-    type: RequestType.assistance,
-    title: 'Battery Jump Start',
-    incidentType: 'Dead Battery',
-    date: DateTime(2024, 10, 5, 18, 20),
-    location: 'Maadi Bridge',
-    contactNumber: '+201223334455',
-    description: 'Car battery is dead and won’t start, need a jump start.',
-    status: RequestStatus.pending,
-  ),
-];
 
 class RequestHistoryScreen extends HookWidget {
   const RequestHistoryScreen({super.key});
@@ -70,8 +25,55 @@ class RequestHistoryScreen extends HookWidget {
     final dateSort = useState(_DateSort.newest);
     final statusFilter = useState<RequestStatus?>(null);
 
+    final isLoading = useState(true);
+    final errorMessage = useState<String?>(null);
+    final items = useState<List<RequestHistoryItem>>(const <RequestHistoryItem>[]);
+    final openingId = useState<String?>(null);
+
+    Future<void> load() async {
+      isLoading.value = true;
+      errorMessage.value = null;
+      final result = await HistoryService.instance.getHistory();
+      isLoading.value = false;
+      result.fold(
+        (f) => errorMessage.value = f.message,
+        (data) {
+          final list = (data is List) ? data : const <dynamic>[];
+          items.value = list
+              .whereType<Map<String, dynamic>>()
+              .map(RequestHistoryItem.fromHistoryJson)
+              .toList();
+        },
+      );
+    }
+
+    useEffect(() {
+      load();
+      return null;
+    }, const []);
+
+    Future<void> openDetails(RequestHistoryItem item) async {
+      if (openingId.value != null) return;
+      openingId.value = item.id;
+      final result = item.type == RequestType.accident
+          ? await IncidentService.instance.getById(item.id)
+          : await AssistanceService.instance.getById(item.id);
+      openingId.value = null;
+      if (!context.mounted) return;
+      result.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (data) {
+          if (data is! Map) return;
+          final detail = item.type == RequestType.accident
+              ? RequestHistoryItem.fromIncidentDetail(data.cast<String, dynamic>())
+              : RequestHistoryItem.fromAssistanceDetail(data.cast<String, dynamic>());
+          context.push(AppRoutes.requestDetails, extra: detail);
+        },
+      );
+    }
+
     final filtered = useMemoized(() {
-      var result = _mockHistory.toList();
+      var result = items.value.toList();
 
       final q = query.value.trim().toLowerCase();
       if (q.isNotEmpty) {
@@ -92,7 +94,7 @@ class RequestHistoryScreen extends HookWidget {
           : a.date.compareTo(b.date));
 
       return result;
-    }, [query.value, dateSort.value, statusFilter.value]);
+    }, [items.value, query.value, dateSort.value, statusFilter.value]);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -142,20 +144,32 @@ class RequestHistoryScreen extends HookWidget {
 
             // ── List ──────────────────────────────────────────────────────────
             Expanded(
-              child: filtered.isEmpty
-                  ? const NearbyNoMatchState()
-                  : ListView.separated(
-                      padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, 16.h),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 24.h),
-                      itemBuilder: (_, index) => RequestHistoryCard(
-                        item: filtered[index],
-                        onViewDetails: () => context.push(
-                          AppRoutes.requestDetails,
-                          extra: filtered[index],
+              child: switch ((isLoading.value, errorMessage.value)) {
+                (true, _) => Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
+                (false, final String msg) => _ErrorState(message: msg, onRetry: load),
+                _ => filtered.isEmpty
+                    ? RefreshIndicator(
+                        onRefresh: load,
+                        child: ListView(
+                          children: [SizedBox(height: 120.h), const NearbyNoMatchState()],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: load,
+                        color: AppColors.primary,
+                        child: ListView.separated(
+                          padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, 16.h),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) => SizedBox(height: 24.h),
+                          itemBuilder: (_, index) => RequestHistoryCard(
+                            item: filtered[index],
+                            onViewDetails: () => openDetails(filtered[index]),
+                          ),
                         ),
                       ),
-                    ),
+              },
             ),
 
             // ── Back to home ──────────────────────────────────────────────────
@@ -167,6 +181,56 @@ class RequestHistoryScreen extends HookWidget {
                 variant: ButtonVariant.primary,
                 height: ButtonSize.large,
                 isFullWidth: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Error state ─────────────────────────────────────────────────────────────────
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 40.r, color: AppColors.distanceText),
+            SizedBox(height: 12.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.regular,
+                fontSize: 14.sp,
+                color: AppColors.distanceText,
+                height: 20 / 14,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Retry',
+                style: TextStyle(
+                  fontFamily: AppTypography.robotoFlex,
+                  fontVariations: AppTypography.bold,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14.sp,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ],

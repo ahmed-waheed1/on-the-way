@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,8 +11,14 @@ import '../../../../shared/widgets/nearby_no_match_state.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/assistance_request.dart';
+import '../../data/feed_service.dart';
 import '../widgets/assistance_card.dart';
 import '../widgets/nearby_filter_row.dart';
+import 'package:on_the_way/src/features/account/presentation/widgets/edit_field_sheet.dart';
+import 'package:on_the_way/src/features/need_help/data/assistance_service.dart';
+import 'package:on_the_way/src/features/request_history/domain/entities/request_history_item.dart';
+import 'package:on_the_way/src/routing/app_routes.dart';
+import 'package:on_the_way/src/shared/helpers/show_toast.dart';
 
 const _kBg = Color(0xFFF5F6F8);
 const _kPrimaryBlue = Color(0xFF025D8C);
@@ -19,38 +26,20 @@ const _kTitleText = Color(0xFF222222);
 
 const _kFilters = ['ALL', 'Type', 'Time', 'Location'];
 
-final _mockRequests = [
-  const AssistanceRequest(
-    id: '1',
-    name: 'Salah Salem',
-    distanceKm: 1.5,
-    type: AssistanceType.breakdown,
-  ),
-  const AssistanceRequest(
-    id: '2',
-    name: 'El_Shohada',
-    distanceKm: 2.7,
-    type: AssistanceType.weather,
-  ),
-  const AssistanceRequest(
-    id: '3',
-    name: 'Nasr City',
-    distanceKm: 3.6,
-    type: AssistanceType.flatTire,
-  ),
-  const AssistanceRequest(
-    id: '4',
-    name: 'Ahmed Kamal',
-    distanceKm: 0.8,
-    type: AssistanceType.fuel,
-  ),
-  const AssistanceRequest(
-    id: '5',
-    name: 'Maadi Station',
-    distanceKm: 4.2,
-    type: AssistanceType.accident,
-  ),
-];
+/// Fetches the current GPS position, requesting permission if needed.
+Future<Position?> _currentPosition() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+  if (permission == LocationPermission.denied ||
+      permission == LocationPermission.deniedForever) {
+    return null;
+  }
+  return Geolocator.getCurrentPosition(
+    locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+  );
+}
 
 class NearbyAssistanceScreen extends HookWidget {
   const NearbyAssistanceScreen({super.key});
@@ -61,6 +50,83 @@ class NearbyAssistanceScreen extends HookWidget {
     final selectedTypes = useState<Set<AssistanceType>>({});
     final sortAscending = useState(true);   // true = nearest first
     final maxDistanceKm = useState<double?>(null); // null = any
+
+    // ── Live feed state ───────────────────────────────────────────────────────
+    final requests = useState<List<AssistanceRequest>>(const <AssistanceRequest>[]);
+    final isLoading = useState(true);
+    final errorMessage = useState<String?>(null);
+    final offeringId = useState<String?>(null);
+    final openingId = useState<String?>(null);
+
+    Future<void> openDetails(AssistanceRequest req) async {
+      if (openingId.value != null) return;
+      openingId.value = req.id;
+      final res = await AssistanceService.instance.getById(req.id);
+      openingId.value = null;
+      if (!context.mounted) return;
+      res.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (data) {
+          if (data is! Map) return;
+          final detail = RequestHistoryItem.fromAssistanceDetail(
+            data.cast<String, dynamic>(),
+          );
+          context.push(AppRoutes.requestDetails, extra: detail);
+        },
+      );
+    }
+
+    Future<void> offerHelp(AssistanceRequest req) async {
+      if (offeringId.value != null) return;
+      final message = await showEditFieldSheet(
+        context,
+        title: 'Offer Help',
+        currentValue: '',
+        hint: 'Add a short message for the requester…',
+        maxLines: 3,
+      );
+      if (message == null) return; // cancelled
+      offeringId.value = req.id;
+      final res = await FeedService.instance
+          .offerHelp(assistanceId: req.id, message: message);
+      offeringId.value = null;
+      if (!context.mounted) return;
+      res.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (_) => showToast(context,
+            message: 'Help offered — the requester has been notified.',
+            status: 'success'),
+      );
+    }
+
+    Future<void> load() async {
+      isLoading.value = true;
+      errorMessage.value = null;
+      final pos = await _currentPosition();
+      if (pos == null) {
+        isLoading.value = false;
+        errorMessage.value = 'Location permission is required to see nearby requests.';
+        return;
+      }
+      final res = await FeedService.instance
+          .nearbyAssistance(lat: pos.latitude, lon: pos.longitude);
+      isLoading.value = false;
+      res.fold(
+        (f) => errorMessage.value = f.message,
+        (data) {
+          final list = (data is List) ? data : const <dynamic>[];
+          requests.value = list
+              .whereType<Map<String, dynamic>>()
+              .map(AssistanceRequest.fromFeedJson)
+              .toList();
+        },
+      );
+    }
+
+    useEffect(() {
+      load();
+      return null;
+    }, const []);
 
     // ── Derived: which chips show as active ───────────────────────────────────
     final activeChips = useMemoized(() {
@@ -78,7 +144,7 @@ class NearbyAssistanceScreen extends HookWidget {
 
     // ── Derived: filtered + sorted list ──────────────────────────────────────
     final filtered = useMemoized(() {
-      var result = _mockRequests.toList();
+      var result = requests.value.toList();
 
       if (selectedTypes.value.isNotEmpty) {
         result =
@@ -93,7 +159,7 @@ class NearbyAssistanceScreen extends HookWidget {
           : b.distanceKm.compareTo(a.distanceKm));
 
       return result;
-    }, [selectedTypes.value, sortAscending.value, maxDistanceKm.value]);
+    }, [requests.value, selectedTypes.value, sortAscending.value, maxDistanceKm.value]);
 
     // ── Bottom-sheet helpers ──────────────────────────────────────────────────
     void openTypeSheet() async {
@@ -160,24 +226,84 @@ class NearbyAssistanceScreen extends HookWidget {
               ),
               SizedBox(height: 36.h),
               Expanded(
-                child: _mockRequests.isEmpty
-                    ? const NearbyEmptyState()
-                    : filtered.isEmpty
-                        ? const NearbyNoMatchState()
-                        : ListView.separated(
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 15.h),
-                        itemBuilder: (context, index) {
-                          return AssistanceCard(
-                            request: filtered[index],
-                            onViewDetails: () {},
-                            onOfferHelp: () {},
-                          );
-                        },
-                      ),
+                child: isLoading.value
+                    ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    : errorMessage.value != null
+                        ? _FeedError(message: errorMessage.value!, onRetry: load)
+                        : requests.value.isEmpty
+                            ? const NearbyEmptyState()
+                            : filtered.isEmpty
+                                ? const NearbyNoMatchState()
+                                : RefreshIndicator(
+                                    onRefresh: load,
+                                    color: AppColors.primary,
+                                    child: ListView.separated(
+                                      itemCount: filtered.length,
+                                      separatorBuilder: (_, __) => SizedBox(height: 15.h),
+                                      itemBuilder: (context, index) {
+                                        final req = filtered[index];
+                                        return AssistanceCard(
+                                          request: req,
+                                          onViewDetails: () => openDetails(req),
+                                          onOfferHelp: () => offerHelp(req),
+                                          isOffering: offeringId.value == req.id,
+                                        );
+                                      },
+                                    ),
+                                  ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Feed error state ─────────────────────────────────────────────────────────
+
+class _FeedError extends StatelessWidget {
+  const _FeedError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 40.r, color: AppColors.distanceText),
+            SizedBox(height: 12.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.regular,
+                fontSize: 14.sp,
+                color: AppColors.distanceText,
+                height: 20 / 14,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Retry',
+                style: TextStyle(
+                  fontFamily: AppTypography.robotoFlex,
+                  fontVariations: AppTypography.bold,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14.sp,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

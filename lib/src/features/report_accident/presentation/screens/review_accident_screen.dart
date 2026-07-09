@@ -4,6 +4,7 @@ import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
 import 'package:on_the_way/src/features/report_accident/presentation/providers/accident_report_provider.dart';
+import 'package:on_the_way/src/features/report_accident/data/incident_service.dart';
 
 const _kLabelColor = Color(0xFF6B7280);
 const _kStatusOpen = Color(0xFFFF305D);
@@ -36,10 +37,44 @@ class ReviewAccidentScreen extends HookConsumerWidget {
       return '${r.nextInt(900) + 100}-${r.nextInt(900) + 100}';
     });
 
+    final isSubmitting = useState(false);
+
     void finish({required String message, required String status}) {
       showToast(context, message: message, status: status);
       notifier.reset();
       context.go(AppRoutes.home);
+    }
+
+    Future<void> submit() async {
+      if (isSubmitting.value) return;
+      if (draft.latitude == null || draft.longitude == null) {
+        showToast(context,
+            message: 'Location is required — go back and set your location.',
+            status: 'error');
+        return;
+      }
+      if (draft.image == null) {
+        showToast(context,
+            message: 'A photo is required — go back and add one.',
+            status: 'error');
+        return;
+      }
+      isSubmitting.value = true;
+      final result = await IncidentService.instance.report(
+        type: draft.type?.index ?? 0,
+        latitude: draft.latitude!,
+        longitude: draft.longitude!,
+        locationName: draft.location,
+        description: draft.description,
+        phoneNumber: draft.phoneNumber,
+        image: draft.image,
+      );
+      isSubmitting.value = false;
+      if (!context.mounted) return;
+      result.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (_) => context.push(AppRoutes.accidentSent),
+      );
     }
 
     return Scaffold(
@@ -210,8 +245,8 @@ class ReviewAccidentScreen extends HookConsumerWidget {
               child: Column(
                 children: [
                   _PrimaryButton(
-                    label: 'Confirm',
-                    onTap: () => context.push(AppRoutes.accidentSent),
+                    label: isSubmitting.value ? 'Submitting…' : 'Confirm',
+                    onTap: submit,
                   ),
                   SizedBox(height: 12.h),
                   _OutlineButton(

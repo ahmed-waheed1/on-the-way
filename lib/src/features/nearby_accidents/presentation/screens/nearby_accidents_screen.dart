@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,43 +11,30 @@ import '../../../../shared/widgets/nearby_no_match_state.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../../domain/entities/accident_report.dart';
+import 'package:on_the_way/src/features/nearby_assistance/data/feed_service.dart';
+import 'package:on_the_way/src/features/report_accident/data/incident_service.dart';
+import 'package:on_the_way/src/features/request_history/domain/entities/request_history_item.dart';
+import 'package:on_the_way/src/routing/app_routes.dart';
+import 'package:on_the_way/src/shared/helpers/show_toast.dart';
 import '../widgets/accident_card.dart';
 import '../../../../shared/widgets/nearby_filter_row.dart';
 
 const _kFilters = ['ALL', 'Type', 'Time', 'Location'];
 
-final _mockReports = [
-  const AccidentReport(
-    id: '1',
-    name: 'Mobark St',
-    distanceKm: 1.5,
-    type: AccidentType.crash,
-  ),
-  const AccidentReport(
-    id: '2',
-    name: 'El_Shohada',
-    distanceKm: 2.7,
-    type: AccidentType.medical,
-  ),
-  const AccidentReport(
-    id: '3',
-    name: 'Shobra Ms',
-    distanceKm: 2.7,
-    type: AccidentType.fire,
-  ),
-  const AccidentReport(
-    id: '4',
-    name: 'Nasr City',
-    distanceKm: 4.1,
-    type: AccidentType.roadblock,
-  ),
-  const AccidentReport(
-    id: '5',
-    name: 'Maadi Bridge',
-    distanceKm: 5.3,
-    type: AccidentType.flood,
-  ),
-];
+/// Fetches the current GPS position, requesting permission if needed.
+Future<Position?> _currentPosition() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+  if (permission == LocationPermission.denied ||
+      permission == LocationPermission.deniedForever) {
+    return null;
+  }
+  return Geolocator.getCurrentPosition(
+    locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+  );
+}
 
 class NearbyAccidentsScreen extends HookWidget {
   const NearbyAccidentsScreen({super.key});
@@ -57,6 +45,74 @@ class NearbyAccidentsScreen extends HookWidget {
     final selectedTypes = useState<Set<AccidentType>>({});
     final sortAscending = useState(true);
     final maxDistanceKm = useState<double?>(null);
+
+    // ── Live feed state ───────────────────────────────────────────────────────
+    final reports = useState<List<AccidentReport>>(const <AccidentReport>[]);
+    final isLoading = useState(true);
+    final errorMessage = useState<String?>(null);
+    final confirmingId = useState<String?>(null);
+    final openingId = useState<String?>(null);
+
+    Future<void> openDetails(AccidentReport report) async {
+      if (openingId.value != null) return;
+      openingId.value = report.id;
+      final res = await IncidentService.instance.getById(report.id);
+      openingId.value = null;
+      if (!context.mounted) return;
+      res.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (data) {
+          if (data is! Map) return;
+          final detail = RequestHistoryItem.fromIncidentDetail(
+            data.cast<String, dynamic>(),
+          );
+          context.push(AppRoutes.requestDetails, extra: detail);
+        },
+      );
+    }
+
+    Future<void> confirmIncident(AccidentReport report) async {
+      if (confirmingId.value != null) return;
+      confirmingId.value = report.id;
+      final res = await IncidentService.instance
+          .vote(incidentId: report.id, isUpvote: true);
+      confirmingId.value = null;
+      if (!context.mounted) return;
+      res.fold(
+        (f) => showToast(context, message: f.message, status: 'error'),
+        (_) => showToast(context,
+            message: 'Thanks — your confirmation was recorded.', status: 'success'),
+      );
+    }
+
+    Future<void> load() async {
+      isLoading.value = true;
+      errorMessage.value = null;
+      final pos = await _currentPosition();
+      if (pos == null) {
+        isLoading.value = false;
+        errorMessage.value = 'Location permission is required to see nearby reports.';
+        return;
+      }
+      final res = await FeedService.instance
+          .nearbyIncidents(lat: pos.latitude, lon: pos.longitude);
+      isLoading.value = false;
+      res.fold(
+        (f) => errorMessage.value = f.message,
+        (data) {
+          final list = (data is List) ? data : const <dynamic>[];
+          reports.value = list
+              .whereType<Map<String, dynamic>>()
+              .map(AccidentReport.fromFeedJson)
+              .toList();
+        },
+      );
+    }
+
+    useEffect(() {
+      load();
+      return null;
+    }, const []);
 
     // ── Derived: which chips show as active ───────────────────────────────────
     final activeChips = useMemoized(() {
@@ -74,7 +130,7 @@ class NearbyAccidentsScreen extends HookWidget {
 
     // ── Derived: filtered + sorted list ──────────────────────────────────────
     final filtered = useMemoized(() {
-      var result = _mockReports.toList();
+      var result = reports.value.toList();
 
       if (selectedTypes.value.isNotEmpty) {
         result =
@@ -89,7 +145,7 @@ class NearbyAccidentsScreen extends HookWidget {
           : b.distanceKm.compareTo(a.distanceKm));
 
       return result;
-    }, [selectedTypes.value, sortAscending.value, maxDistanceKm.value]);
+    }, [reports.value, selectedTypes.value, sortAscending.value, maxDistanceKm.value]);
 
     // ── Bottom-sheet helpers ──────────────────────────────────────────────────
     void openTypeSheet() async {
@@ -156,24 +212,84 @@ class NearbyAccidentsScreen extends HookWidget {
               ),
               SizedBox(height: 36.h),
               Expanded(
-                child: _mockReports.isEmpty
-                    ? const NearbyEmptyState()
-                    : filtered.isEmpty
-                        ? const NearbyNoMatchState()
-                        : ListView.separated(
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 15.h),
-                        itemBuilder: (context, index) {
-                          return AccidentCard(
-                            report: filtered[index],
-                            onViewDetails: () {},
-                            onOfferHelp: () {},
-                          );
-                        },
-                      ),
+                child: isLoading.value
+                    ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    : errorMessage.value != null
+                        ? _FeedError(message: errorMessage.value!, onRetry: load)
+                        : reports.value.isEmpty
+                            ? const NearbyEmptyState()
+                            : filtered.isEmpty
+                                ? const NearbyNoMatchState()
+                                : RefreshIndicator(
+                                    onRefresh: load,
+                                    color: AppColors.primary,
+                                    child: ListView.separated(
+                                      itemCount: filtered.length,
+                                      separatorBuilder: (_, __) => SizedBox(height: 15.h),
+                                      itemBuilder: (context, index) {
+                                        final report = filtered[index];
+                                        return AccidentCard(
+                                          report: report,
+                                          onViewDetails: () => openDetails(report),
+                                          onConfirm: () => confirmIncident(report),
+                                          isConfirming: confirmingId.value == report.id,
+                                        );
+                                      },
+                                    ),
+                                  ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Feed error state ─────────────────────────────────────────────────────────
+
+class _FeedError extends StatelessWidget {
+  const _FeedError({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 40.r, color: AppColors.distanceText),
+            SizedBox(height: 12.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.regular,
+                fontSize: 14.sp,
+                color: AppColors.distanceText,
+                height: 20 / 14,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(
+                'Retry',
+                style: TextStyle(
+                  fontFamily: AppTypography.robotoFlex,
+                  fontVariations: AppTypography.bold,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14.sp,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -20,6 +20,8 @@ class NearbyCard extends StatelessWidget {
     required this.badgeTextColor,
     required this.onViewDetails,
     required this.onOfferHelp,
+    this.actionLabel = 'Offer Help',
+    this.isActionBusy = false,
   });
 
   final String title;
@@ -29,6 +31,8 @@ class NearbyCard extends StatelessWidget {
   final Color badgeTextColor;
   final VoidCallback onViewDetails;
   final VoidCallback onOfferHelp;
+  final String actionLabel;
+  final bool isActionBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +78,10 @@ class NearbyCard extends StatelessWidget {
               SizedBox(width: 4.w),
               Expanded(
                 child: _CardButton(
-                  label: 'Offer Help',
+                  label: isActionBusy ? '…' : actionLabel,
                   bg: AppColors.offerHelpBg,
                   textColor: AppColors.offerHelpText,
-                  onTap: onOfferHelp,
+                  onTap: isActionBusy ? () {} : onOfferHelp,
                 ),
               ),
             ],

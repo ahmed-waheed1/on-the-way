@@ -22,6 +22,7 @@ import 'package:on_the_way/src/features/account/presentation/screens/change_numb
 import 'package:on_the_way/src/features/account/presentation/screens/change_number_otp_screen.dart';
 import 'package:on_the_way/src/features/account/presentation/screens/change_number_success_screen.dart';
 import 'package:on_the_way/src/features/request_history/presentation/screens/request_history_screen.dart';
+import 'package:on_the_way/src/features/request_history/presentation/screens/my_requests_screen.dart';
 import 'package:on_the_way/src/features/request_history/presentation/screens/request_details_screen.dart';
 import 'package:on_the_way/src/features/request_history/domain/entities/request_history_item.dart';
 import 'package:on_the_way/src/features/report_accident/presentation/screens/report_accident_screen.dart';
@@ -58,7 +59,8 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.verifyAccount,
       name: 'verifyAccount',
-      builder: (context, state) => VerifyAccountScreen(email: state.extra as String?),
+      builder: (context, state) =>
+          VerifyAccountScreen(args: state.extra as VerifyAccountArgs?),
     ),
     GoRoute(
       path: AppRoutes.emailVerified,
@@ -129,6 +131,11 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.requestHistory,
       name: 'requestHistory',
       builder: (context, state) => const RequestHistoryScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.myRequests,
+      name: 'myRequests',
+      builder: (context, state) => const MyRequestsScreen(),
     ),
     GoRoute(
       path: AppRoutes.requestDetails,

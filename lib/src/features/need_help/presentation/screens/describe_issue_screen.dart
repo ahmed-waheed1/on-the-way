@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -28,6 +30,8 @@ class DescribeIssueScreen extends HookConsumerWidget {
     final hasText = useState(false);
     final pickedImages = useState<List<XFile>>([]);
     final locationText = useState<String>('');
+    final latitude = useState<double?>(null);
+    final longitude = useState<double?>(null);
     final isFetchingLocation = useState(false);
 
     useEffect(() {
@@ -61,6 +65,8 @@ class DescribeIssueScreen extends HookConsumerWidget {
             accuracy: LocationAccuracy.medium,
           ),
         );
+        latitude.value = position.latitude;
+        longitude.value = position.longitude;
         final placemarks = await placemarkFromCoordinates(
           position.latitude,
           position.longitude,
@@ -183,8 +189,15 @@ class DescribeIssueScreen extends HookConsumerWidget {
                       final notifier =
                           ref.read(helpRequestProvider.notifier);
                       notifier.setDescription(controller.text.trim());
-                      notifier.setLocation(locationText.value);
+                      notifier.setLocation(
+                        locationText.value,
+                        latitude: latitude.value,
+                        longitude: longitude.value,
+                      );
                       notifier.setImageCount(pickedImages.value.length);
+                      if (pickedImages.value.isNotEmpty) {
+                        notifier.setImage(File(pickedImages.value.first.path));
+                      }
                       context.push(AppRoutes.reviewRequest);
                     },
                   ),

@@ -1,172 +1,220 @@
 import 'dart:async';
-import 'dart:io';
-import '../utils/utils.dart';
-import '../config/app_config.dart';
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
 
+import 'package:fpdart/fpdart.dart';
+
+import '../core/network/api_client.dart';
+import '../core/network/api_endpoints.dart';
+import '../core/network/token_store.dart';
+import '../utils/failure.dart';
+import '../utils/typedefs.dart';
+import 'secure_storage_service.dart';
+
+/// REST-backed auth service for the On The Way API.
+///
+/// Auth state is a simple `Map<String, dynamic>?` (user fields) so the rest of
+/// the app (repository, providers) stays framework-agnostic. On login/register
+/// the JWT is persisted via [TokenStore] and the user profile via secure
+/// storage (the API exposes no "get current user" endpoint).
 class AuthService {
   AuthService._();
   static final AuthService instance = AuthService._();
 
-  Account get _account => AppConfig.appwriteAccount;
+  static const _userKey = 'auth_user_json';
+
+  final ApiClient _api = ApiClient.instance;
 
   final StreamController<Map<String, dynamic>?> _authStateController =
       StreamController<Map<String, dynamic>?>.broadcast();
 
   Stream<Map<String, dynamic>?> get authStateChanges => _authStateController.stream;
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Registration & verification ─────────────────────────────────────────
 
-  Map<String, dynamic> _userToMap(appwrite_models.User user) {
-    final prefs = user.prefs.data;
-    return {
-      'id': user.$id,
-      'email': user.email,
-      'name': user.name,
-      'phone': prefs['phone'],
-      'username': prefs['username'],
-      'bio': prefs['bio'],
-      'photoUrl': prefs['photoUrl'],
-    };
+  FutureEither<void> register({
+    required String fullName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) {
+    return _api.post<void>(ApiEndpoints.register, data: {
+      'fullName': fullName,
+      'email': email,
+      'password': password,
+      'confirmPassword': confirmPassword,
+    });
   }
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
+  FutureEither<void> verifyEmail({required String email, required String otp}) {
+    return _api.post<void>(ApiEndpoints.verifyEmail, data: {
+      'email': email,
+      'otp': otp,
+    });
+  }
+
+  // ── Login ───────────────────────────────────────────────────────────────
 
   FutureEither<Map<String, dynamic>?> login({
     required String email,
     required String password,
   }) async {
-    return runTask(() async {
-      await _account.createEmailPasswordSession(email: email, password: password);
-      final user = await _account.get();
-      final userData = _userToMap(user);
-      _authStateController.add(userData);
-      return userData;
-    }, requiresNetwork: true);
+    final result = await _api.post<dynamic>(
+      ApiEndpoints.login,
+      data: {'email': email, 'password': password},
+    );
+    return result.fold(
+      (failure) async => left(failure),
+      (data) async => await _handleAuthSuccess(data, fallbackEmail: email),
+    );
   }
 
-  FutureEither<Map<String, dynamic>?> signUp({
-    required String name,
+  FutureEither<Map<String, dynamic>?> googleLogin({required String idToken}) async {
+    final result = await _api.post<dynamic>(
+      ApiEndpoints.googleLogin,
+      data: {'idToken': idToken},
+    );
+    return result.fold(
+      (failure) async => left(failure),
+      (data) async => await _handleAuthSuccess(data),
+    );
+  }
+
+  // ── Password recovery ─────────────────────────────────────────────────────
+
+  FutureEither<void> forgetPassword({required String email}) {
+    return _api.post<void>(ApiEndpoints.forgetPassword, data: {'email': email});
+  }
+
+  FutureEither<void> resetPassword({
     required String email,
-    required String password,
-  }) async {
-    return runTask(() async {
-      final user = await _account.create(
-        userId: ID.unique(),
-        email: email,
-        password: password,
-        name: name,
-      );
-      await _account.createEmailPasswordSession(email: email, password: password);
-      final userData = _userToMap(user);
-      _authStateController.add(userData);
-      return userData;
-    }, requiresNetwork: true);
+    required String otp,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) {
+    return _api.post<void>(ApiEndpoints.resetPassword, data: {
+      'email': email,
+      'otp': otp,
+      'newPassword': newPassword,
+      'confirmNewPassword': confirmNewPassword,
+    });
   }
 
-  FutureEither<void> forgotPassword({required String email}) async {
-    return runTask(() async {
-      await _account.createRecovery(
-        email: email,
-        url: 'https://example.com/recovery',
-      );
-    }, requiresNetwork: true);
-  }
+  // ── Session ───────────────────────────────────────────────────────────────
 
+  /// Local logout — the API has no user logout endpoint, so we just clear the
+  /// stored token and user.
   FutureEither<void> logout() async {
-    return runTask(() async {
-      await _account.deleteSession(sessionId: 'current');
-      _authStateController.add(null);
-    }, requiresNetwork: true);
+    await TokenStore.instance.clear();
+    await SecureStorageService.instance.delete(_userKey);
+    _authStateController.add(null);
+    return right(null);
   }
 
+  /// Restores the persisted user if a token is present.
   FutureEither<Map<String, dynamic>?> getCurrentUser() async {
-    return runTask(() async {
+    if (!TokenStore.instance.hasToken) return right(null);
+    final result = await SecureStorageService.instance.read(_userKey);
+    return result.map((json) {
+      if (json == null || json.isEmpty) return null;
       try {
-        final user = await _account.get();
-        return _userToMap(user);
+        return jsonDecode(json) as Map<String, dynamic>;
       } catch (_) {
         return null;
       }
     });
   }
 
-  // ── Profile update ────────────────────────────────────────────────────────
-
-  FutureEither<Map<String, dynamic>> updateProfile({
-    String? name,
-    String? phone,
-    String? username,
-    String? bio,
-  }) async {
-    return runTask(() async {
-      if (name != null && name.isNotEmpty) {
-        await _account.updateName(name: name);
-      }
-
-      final currentUser = await _account.get();
-      final prefs = Map<String, dynamic>.from(currentUser.prefs.data);
-
-      if (phone != null) prefs['phone'] = phone;
-      if (username != null) prefs['username'] = username;
-      if (bio != null) prefs['bio'] = bio;
-
-      await _account.updatePrefs(prefs: prefs);
-
-      final updatedUser = await _account.get();
-      final userData = _userToMap(updatedUser);
-      _authStateController.add(userData);
-      return userData;
-    }, requiresNetwork: true);
+  /// Persists profile edits locally (no profile API exists) and re-emits state.
+  FutureEither<Map<String, dynamic>> saveLocalUser(Map<String, dynamic> user) async {
+    await SecureStorageService.instance.write(_userKey, jsonEncode(user));
+    _authStateController.add(user);
+    return right(user);
   }
 
-  // ── Avatar upload ─────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
-  FutureEither<String> uploadAvatar(File imageFile) async {
-    return runTask(() async {
-      final bucketId = AppConfig.avatarBucketId;
-      if (bucketId.isEmpty) {
-        throw Exception(
-          'Avatar storage bucket not configured. '
-          'Set APPWRITE_AVATAR_BUCKET_ID in .env and create the bucket in Appwrite Console.',
-        );
+  Future<Either<Failure, Map<String, dynamic>?>> _handleAuthSuccess(
+    dynamic data, {
+    String? fallbackEmail,
+  }) async {
+    final token = _extractToken(data);
+    if (token == null || token.isEmpty) {
+      return left(const ServerFailure('Login succeeded but no token was returned.'));
+    }
+    await TokenStore.instance.save(token);
+
+    final user = _extractUser(data, token, fallbackEmail: fallbackEmail);
+    await SecureStorageService.instance.write(_userKey, jsonEncode(user));
+    _authStateController.add(user);
+    return right(user);
+  }
+
+  /// Pulls the JWT out of the auth payload, whatever shape the API returns.
+  String? _extractToken(dynamic data) {
+    if (data is String) return data;
+    if (data is Map) {
+      for (final key in ['token', 'accessToken', 'access_token', 'jwt', 'jwtToken']) {
+        final v = data[key];
+        if (v is String && v.isNotEmpty) return v;
       }
+      // Sometimes nested under "data" or "token" object.
+      final nested = data['token'] ?? data['data'];
+      if (nested is Map) return _extractToken(nested);
+    }
+    return null;
+  }
 
-      // Fetch user first so we can set file ownership permissions.
-      final currentUser = await _account.get();
-      final userId = currentUser.$id;
+  /// Builds a user map from the payload, falling back to JWT claims.
+  Map<String, dynamic> _extractUser(dynamic data, String token, {String? fallbackEmail}) {
+    Map<String, dynamic>? raw;
+    if (data is Map) {
+      final u = data['user'];
+      raw = (u is Map ? u : data).cast<String, dynamic>();
+    }
 
-      final bytes = await imageFile.readAsBytes();
-      final fileId = ID.unique();
-      await AppConfig.appwriteStorage.createFile(
-        bucketId: bucketId,
-        fileId: fileId,
-        file: InputFile.fromBytes(
-          bytes: bytes,
-          filename: 'avatar_$fileId.jpg',
-        ),
-        permissions: [
-          Permission.read(Role.any()),          // public — avatars are visible to everyone
-          Permission.update(Role.user(userId)), // only owner can replace
-          Permission.delete(Role.user(userId)), // only owner can delete
-        ],
-      );
+    final claims = _decodeJwt(token);
 
-      final endpoint = dotenv.get('APPWRITE_ENDPOINT', fallback: 'https://cloud.appwrite.io/v1');
-      final projectId = dotenv.get('APPWRITE_PROJECT_ID', fallback: '');
-      final url = '$endpoint/storage/buckets/$bucketId/files/$fileId/view?project=$projectId';
+    String? pick(Map<String, dynamic>? m, List<String> keys) {
+      if (m == null) return null;
+      for (final k in keys) {
+        final v = m[k];
+        if (v != null && v.toString().isNotEmpty) return v.toString();
+      }
+      return null;
+    }
 
-      final prefs = Map<String, dynamic>.from(currentUser.prefs.data);
-      prefs['photoUrl'] = url;
-      await _account.updatePrefs(prefs: prefs);
+    return {
+      'id': pick(raw, ['id', 'userId', 'sub']) ??
+          pick(claims, ['sub', 'nameid',
+              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']) ??
+          '',
+      'email': pick(raw, ['email']) ??
+          pick(claims, ['email',
+              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']) ??
+          fallbackEmail ??
+          '',
+      'name': pick(raw, ['fullName', 'name', 'userName']) ??
+          pick(claims, ['FullName', 'name', 'unique_name',
+              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']),
+      'phone': pick(raw, ['phoneNumber', 'phone']),
+      'username': pick(raw, ['userName', 'username']),
+      'bio': pick(raw, ['bio']),
+      'photoUrl': pick(raw, ['photoUrl', 'profileImage', 'imageUrl', 'avatar']),
+    };
+  }
 
-      final updatedUser = await _account.get();
-      _authStateController.add(_userToMap(updatedUser));
-
-      return url;
-    }, requiresNetwork: true);
+  Map<String, dynamic>? _decodeJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final map = jsonDecode(decoded);
+      return map is Map ? map.cast<String, dynamic>() : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   void dispose() {

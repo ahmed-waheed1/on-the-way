@@ -28,11 +28,12 @@ class SignupScreen extends HookConsumerWidget {
         return;
       }
 
-      ref.read(authControllerProvider.notifier).signUp(
+      ref.read(authControllerProvider.notifier).register(
         context: context,
-        name: nameController.text, 
-        email: emailController.text, 
+        fullName: nameController.text.trim(),
+        email: emailController.text.trim(),
         password: passwordController.text,
+        confirmPassword: confirmPasswordController.text,
       );
     }
 

@@ -1,25 +1,27 @@
 import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
+import 'package:on_the_way/src/features/auth/presentation/providers/auth_provider.dart';
+
 const _kFieldBg = Color(0xFFF0F0F0);
 const _kHintColor = Color(0xFFC2C5C2);
 const _kSubtitleColor = Color(0xFF6B7280);
 
-class ForgotPasswordScreen extends HookWidget {
+class ForgotPasswordScreen extends HookConsumerWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final emailController = useTextEditingController();
+    final isLoading = ref.watch(authControllerProvider);
 
     void handleSendCode() {
       if (!(formKey.currentState?.validate() ?? false)) return;
-      // TODO: trigger the backend send-OTP request for this email.
-      context.push(
-        AppRoutes.verifyAccount,
-        extra: emailController.text.trim(),
-      );
+      ref.read(authControllerProvider.notifier).forgetPassword(
+            context: context,
+            email: emailController.text.trim(),
+          );
     }
 
     return Scaffold(
@@ -92,8 +94,8 @@ class ForgotPasswordScreen extends HookWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(27.w, 0, 27.w, 24.h),
               child: _SendCodeButton(
-                isLoading: false,
-                onTap: handleSendCode,
+                isLoading: isLoading,
+                onTap: isLoading ? null : handleSendCode,
               ),
             ),
           ],

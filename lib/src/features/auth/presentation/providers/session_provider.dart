@@ -5,13 +5,7 @@ import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 import 'package:on_the_way/src/features/auth/domain/entities/user.dart';
 import 'package:on_the_way/src/features/auth/domain/repositories/auth_repository.dart';
-
-import 'package:on_the_way/src/features/auth/data/repositories/auth_repository_impl.dart';
-
-/// Provides the AuthRepository instance
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepositoryImpl();
-});
+import 'package:on_the_way/src/features/auth/presentation/providers/auth_provider.dart';
 
 /// Provides a stream of auth state changes
 final authStateStreamProvider = StreamProvider<AppUser?>((ref) {

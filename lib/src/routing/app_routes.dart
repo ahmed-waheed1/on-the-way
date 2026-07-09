@@ -24,6 +24,7 @@ abstract final class AppRoutes {
   static const String changeNumberOtp = '/account/change-number/verify';
   static const String changeNumberSuccess = '/account/change-number/success';
   static const String requestHistory = '/request-history';
+  static const String myRequests = '/my-requests';
   static const String requestDetails = '/request-history/details';
   static const String reportAccident = '/report-accident';
   static const String manageRoads = '/manage-roads';

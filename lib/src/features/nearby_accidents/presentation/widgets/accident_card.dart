@@ -9,12 +9,16 @@ class AccidentCard extends StatelessWidget {
     super.key,
     required this.report,
     required this.onViewDetails,
-    required this.onOfferHelp,
+    required this.onConfirm,
+    this.isConfirming = false,
   });
 
   final AccidentReport report;
   final VoidCallback onViewDetails;
-  final VoidCallback onOfferHelp;
+
+  /// Upvotes the incident (POST /api/incidents/vote) — "I confirm this".
+  final VoidCallback onConfirm;
+  final bool isConfirming;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +29,9 @@ class AccidentCard extends StatelessWidget {
       badgeBg: report.type.badgeBg,
       badgeTextColor: report.type.badgeTextColor,
       onViewDetails: onViewDetails,
-      onOfferHelp: onOfferHelp,
+      onOfferHelp: onConfirm,
+      actionLabel: 'Confirm',
+      isActionBusy: isConfirming,
     );
   }
 }

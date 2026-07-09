@@ -10,11 +10,13 @@ class AssistanceCard extends StatelessWidget {
     required this.request,
     required this.onViewDetails,
     required this.onOfferHelp,
+    this.isOffering = false,
   });
 
   final AssistanceRequest request;
   final VoidCallback onViewDetails;
   final VoidCallback onOfferHelp;
+  final bool isOffering;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,7 @@ class AssistanceCard extends StatelessWidget {
       badgeTextColor: request.type.badgeTextColor,
       onViewDetails: onViewDetails,
       onOfferHelp: onOfferHelp,
+      isActionBusy: isOffering,
     );
   }
 }

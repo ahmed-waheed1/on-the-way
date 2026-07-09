@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '../core/network/token_store.dart';
+
 class AppConfig {
   AppConfig._();
   static late final Dio dio;
@@ -34,9 +36,16 @@ class AppConfig {
       ),
     );
 
+    // Restore the persisted JWT into memory before any request runs.
+    await TokenStore.instance.load();
+
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          final token = TokenStore.instance.token;
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
           AppLogger.info('🌐 [DIO] REQUEST[${options.method}] => PATH: ${options.path}');
           return handler.next(options);
         },
@@ -44,13 +53,16 @@ class AppConfig {
           AppLogger.info('✅ [DIO] RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
           return handler.next(response);
         },
-        onError: (DioException e, handler) {
+        onError: (DioException e, handler) async {
           AppLogger.error('❌ [DIO] ERROR[${e.response?.statusCode}] => PATH: ${e.requestOptions.path}');
+          // Token expired / invalid — drop it so the app returns to sign-in.
+          if (e.response?.statusCode == 401) {
+            await TokenStore.instance.clear();
+          }
           return handler.next(e);
         },
       ),
     );
-
   }
 
   static String _getBaseUrl() {

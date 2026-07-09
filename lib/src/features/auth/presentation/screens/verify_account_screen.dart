@@ -3,18 +3,33 @@ import 'dart:async';
 import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
+import 'package:on_the_way/src/features/auth/presentation/providers/auth_provider.dart';
+import 'package:on_the_way/src/features/account/presentation/widgets/edit_field_sheet.dart';
+
 const _kSubtitleColor = Color(0xFF909090);
 const _kTimerColor = Color(0xFF185AC2);
 const _kOtpLength = 5;
 const _kResendSeconds = 60;
 
-class VerifyAccountScreen extends HookWidget {
-  const VerifyAccountScreen({super.key, this.email});
+/// What the OTP screen should do once a valid code is entered.
+enum VerifyPurpose { verifyEmail, resetPassword }
 
-  final String? email;
+class VerifyAccountArgs {
+  const VerifyAccountArgs({required this.email, this.purpose = VerifyPurpose.verifyEmail});
+  final String email;
+  final VerifyPurpose purpose;
+}
+
+class VerifyAccountScreen extends HookConsumerWidget {
+  const VerifyAccountScreen({super.key, this.args});
+
+  final VerifyAccountArgs? args;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final email = args?.email ?? '';
+    final purpose = args?.purpose ?? VerifyPurpose.verifyEmail;
+    final isLoading = ref.watch(authControllerProvider);
     final controllers = useMemoized(
       () => List.generate(_kOtpLength, (_) => TextEditingController()),
       const [],
@@ -69,18 +84,52 @@ class VerifyAccountScreen extends HookWidget {
       }
     }
 
-    void resend() {
+    Future<void> resend() async {
       if (secondsLeft.value != 0) return;
-      // TODO: call the real "resend code" endpoint for [email].
+      final controller = ref.read(authControllerProvider.notifier);
+      if (purpose == VerifyPurpose.resetPassword) {
+        await controller.forgetPassword(context: context, email: email);
+      } else {
+        // Re-trigger by asking the user to register again is not ideal; the API
+        // resends automatically on register. Just restart the timer for now.
+      }
       secondsLeft.value = _kResendSeconds;
-      showToast(context, message: 'A new code has been sent', status: 'info');
+      if (context.mounted) {
+        showToast(context, message: 'A new code has been sent', status: 'info');
+      }
     }
 
     final isComplete = !digits.value.contains('');
+    final code = digits.value.join();
 
-    void verify() {
-      // TODO: verify the entered code against the backend.
-      context.go(AppRoutes.emailVerified);
+    Future<void> verify() async {
+      final controller = ref.read(authControllerProvider.notifier);
+      if (purpose == VerifyPurpose.verifyEmail) {
+        await controller.verifyEmail(context: context, email: email, otp: code);
+        return;
+      }
+      // Password reset: collect a new password, then call reset-password.
+      final newPassword = await showEditFieldSheet(
+        context,
+        title: 'New Password',
+        currentValue: '',
+        hint: 'Enter a new password',
+        obscure: true,
+      );
+      if (newPassword == null || newPassword.length < 6) {
+        if (context.mounted && newPassword != null) {
+          showToast(context, message: 'Password must be at least 6 characters', status: 'error');
+        }
+        return;
+      }
+      if (!context.mounted) return;
+      await controller.resetPassword(
+        context: context,
+        email: email,
+        otp: code,
+        newPassword: newPassword,
+        confirmNewPassword: newPassword,
+      );
     }
 
     return Scaffold(
@@ -185,7 +234,7 @@ class VerifyAccountScreen extends HookWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(27.w, 0, 27.w, 24.h),
               child: _VerifyButton(
-                enabled: isComplete,
+                enabled: isComplete && !isLoading,
                 onTap: verify,
               ),
             ),

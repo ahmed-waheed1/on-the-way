@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
@@ -39,6 +41,7 @@ class DescribeAccidentScreen extends HookConsumerWidget {
       final file = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (file != null) {
         pickedImages.value = [...pickedImages.value, file];
+        notifier.setImage(File(file.path));
       }
     }
 

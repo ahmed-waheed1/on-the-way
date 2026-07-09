@@ -11,6 +11,7 @@ Future<String?> showEditFieldSheet(
   String? hint,
   TextInputType keyboardType = TextInputType.text,
   int maxLines = 1,
+  bool obscure = false,
 }) {
   return showModalBottomSheet<String>(
     context: context,
@@ -23,6 +24,7 @@ Future<String?> showEditFieldSheet(
       hint: hint,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      obscure: obscure,
     ),
   );
 }
@@ -34,6 +36,7 @@ class _EditFieldSheet extends HookWidget {
     this.hint,
     required this.keyboardType,
     required this.maxLines,
+    this.obscure = false,
   });
 
   final String title;
@@ -41,6 +44,7 @@ class _EditFieldSheet extends HookWidget {
   final String? hint;
   final TextInputType keyboardType;
   final int maxLines;
+  final bool obscure;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +104,7 @@ class _EditFieldSheet extends HookWidget {
                   hint: hint,
                   keyboardType: keyboardType,
                   maxLines: maxLines,
+                  obscureText: obscure,
                   autofocus: true,
                   textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
                 ),

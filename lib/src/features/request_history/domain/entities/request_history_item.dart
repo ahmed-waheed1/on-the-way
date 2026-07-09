@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
 
+/// Splits a PascalCase API enum name into words, e.g. "RoadClosure" → "Road Closure".
+String humanizeApiName(String name) {
+  if (name.isEmpty) return name;
+  return name.replaceAllMapped(RegExp(r'(?<=[a-z])(?=[A-Z])'), (_) => ' ');
+}
+
 /// The kind of request a user previously submitted.
 enum RequestType {
   accident,
@@ -17,6 +23,13 @@ enum RequestType {
         RequestType.accident => Icons.report_problem_outlined,
         RequestType.assistance => Icons.build_outlined,
       };
+
+  /// Maps the API `category` field ("Incident" / "Assistance").
+  static RequestType fromCategory(String? category) {
+    return (category ?? '').toLowerCase() == 'assistance'
+        ? RequestType.assistance
+        : RequestType.accident;
+  }
 }
 
 /// The lifecycle status of a request.
@@ -61,6 +74,17 @@ enum RequestStatus {
         RequestStatus.completed => Icons.check_circle_outline,
         RequestStatus.cancelled => Icons.cancel_outlined,
       };
+
+  /// Maps the API `status` string to the closest lifecycle state.
+  static RequestStatus fromApi(String? status) {
+    final s = (status ?? '').toLowerCase().replaceAll(RegExp(r'[\s_]'), '');
+    return switch (s) {
+      'inprogress' || 'accepted' || 'active' || 'ongoing' => RequestStatus.inProgress,
+      'completed' || 'resolved' || 'done' || 'closed' => RequestStatus.completed,
+      'cancelled' || 'canceled' || 'rejected' || 'declined' => RequestStatus.cancelled,
+      _ => RequestStatus.pending, // pending / open / new / submitted
+    };
+  }
 }
 
 class RequestHistoryItem extends Equatable {
@@ -74,6 +98,7 @@ class RequestHistoryItem extends Equatable {
     this.incidentType = '',
     this.description = '',
     this.contactNumber = '',
+    this.imageUrl = '',
   });
 
   final String id;
@@ -81,6 +106,10 @@ class RequestHistoryItem extends Equatable {
   final DateTime date;
   final String location;
   final RequestStatus status;
+
+  /// Relative photo path from the detail endpoint, e.g. `/uploads/incidents/…`.
+  /// Empty for list items (the history list has no image).
+  final String imageUrl;
 
   /// Header title on the details screen, e.g. "Flat Tire Assistance".
   /// Falls back to [RequestType.label] when not provided.
@@ -97,7 +126,56 @@ class RequestHistoryItem extends Equatable {
 
   String get displayTitle => title ?? type.label;
 
+  /// A list item from GET /api/history
+  /// `{ id, category, type, status, date, location }`.
+  factory RequestHistoryItem.fromHistoryJson(Map<String, dynamic> json) {
+    final typeName = humanizeApiName(json['type']?.toString() ?? '');
+    return RequestHistoryItem(
+      id: json['id']?.toString() ?? '',
+      type: RequestType.fromCategory(json['category']?.toString()),
+      date: DateTime.tryParse(json['date']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      location: json['location']?.toString() ?? '',
+      status: RequestStatus.fromApi(json['status']?.toString()),
+      title: typeName,
+      incidentType: typeName,
+    );
+  }
+
+  /// Full record from GET /api/incidents/{id}.
+  factory RequestHistoryItem.fromIncidentDetail(Map<String, dynamic> json) {
+    final typeName = humanizeApiName(json['incidentType']?.toString() ?? '');
+    return RequestHistoryItem(
+      id: json['id']?.toString() ?? '',
+      type: RequestType.accident,
+      date: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      location: json['locationName']?.toString() ?? '',
+      status: RequestStatus.fromApi(json['status']?.toString()),
+      title: typeName,
+      incidentType: typeName,
+      description: json['description']?.toString() ?? '',
+      contactNumber: json['phoneNumber']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
+    );
+  }
+
+  /// Full record from GET /api/assistance/{id}.
+  factory RequestHistoryItem.fromAssistanceDetail(Map<String, dynamic> json) {
+    final typeName = humanizeApiName(json['helpType']?.toString() ?? '');
+    return RequestHistoryItem(
+      id: json['id']?.toString() ?? '',
+      type: RequestType.assistance,
+      date: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      location: json['address']?.toString() ?? '',
+      status: RequestStatus.fromApi(json['status']?.toString()),
+      title: typeName,
+      incidentType: typeName,
+      description: json['description']?.toString() ?? '',
+      contactNumber: json['contactNumber']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
+    );
+  }
+
   @override
   List<Object?> get props =>
-      [id, type, date, location, status, title, incidentType, description, contactNumber];
+      [id, type, date, location, status, title, incidentType, description, contactNumber, imageUrl];
 }
