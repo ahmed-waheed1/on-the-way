@@ -293,7 +293,13 @@ class _OtpBox extends StatelessWidget {
         ),
         decoration: const InputDecoration(
           counterText: '',
+          filled: false,
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
           isCollapsed: true,
           contentPadding: EdgeInsets.zero,
         ),

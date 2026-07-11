@@ -116,7 +116,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           SizedBox(height: 14.h),
-          Center(child: _StepDots(total: 4, current: 3)),
+          const Center(child: _StepDots(total: 4, current: 3)),
         ],
       ),
     );

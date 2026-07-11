@@ -234,7 +234,7 @@ class _AttachedPhoto extends StatelessWidget {
           height: 180.h,
           color: const Color(0xFFF3F4F6),
           alignment: Alignment.center,
-          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+          child: const CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
         ),
         errorWidget: (_, __, ___) => Container(
           height: 180.h,

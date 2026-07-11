@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../routing/app_routes.dart';
+import '../../../../services/location_service.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../providers/help_request_provider.dart';
@@ -41,57 +40,21 @@ class DescribeIssueScreen extends HookConsumerWidget {
     }, [controller]);
 
     Future<void> fetchLocation() async {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permission denied')),
-            );
-          }
-          return;
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
-        await Geolocator.openAppSettings();
-        return;
-      }
-
+      if (isFetchingLocation.value) return;
       isFetchingLocation.value = true;
-      try {
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-          ),
-        );
-        latitude.value = position.latitude;
-        longitude.value = position.longitude;
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude,
-          position.longitude,
-        );
-        if (placemarks.isNotEmpty) {
-          final p = placemarks.first;
-          final parts = [p.street, p.locality, p.administrativeArea]
-              .where((e) => e != null && e!.isNotEmpty)
-              .map((e) => e!)
-              .toList();
-          locationText.value =
-              parts.isNotEmpty ? parts.join(', ') : '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
-        } else {
-          locationText.value =
-              '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
-        }
-      } catch (_) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not fetch location')),
-          );
-        }
-      } finally {
-        isFetchingLocation.value = false;
-      }
+      final result = await LocationService.instance.resolveLocation();
+      isFetchingLocation.value = false;
+      if (!context.mounted) return;
+      result.fold(
+        (failure) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(failure.message)),
+        ),
+        (loc) {
+          latitude.value = loc.position.latitude;
+          longitude.value = loc.position.longitude;
+          locationText.value = loc.address;
+        },
+      );
     }
 
     return Scaffold(
@@ -350,7 +313,13 @@ class _DescriptionField extends StatelessWidget {
             color: _kPlaceholderColor,
             height: 20 / 16,
           ),
+          filled: false,
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
           contentPadding: EdgeInsets.all(12.r),
         ),
       ),

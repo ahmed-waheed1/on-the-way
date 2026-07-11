@@ -1,5 +1,3 @@
-import 'package:geocoding/geocoding.dart';
-
 import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
@@ -49,55 +47,19 @@ class ReportAccidentScreen extends HookConsumerWidget {
     }
 
     Future<void> fetchLocation() async {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (context.mounted) {
-            showToast(context, message: 'Location permission denied', status: 'error');
-          }
-          return;
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
-        await Geolocator.openAppSettings();
-        return;
-      }
-
+      if (isFetchingLocation.value) return;
       isFetchingLocation.value = true;
-      try {
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-        );
-        final placemarks =
-            await placemarkFromCoordinates(position.latitude, position.longitude);
-        if (placemarks.isNotEmpty) {
-          final p = placemarks.first;
-          final parts = [p.subLocality, p.locality, p.administrativeArea]
-              .where((e) => e != null && e.isNotEmpty)
-              .map((e) => e!)
-              .toList();
-          notifier.setLocation(
-            parts.isNotEmpty
-                ? parts.join(', ')
-                : '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
-            latitude: position.latitude,
-            longitude: position.longitude,
-          );
-        } else {
-          notifier.setLocation(
-            '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
-            latitude: position.latitude,
-            longitude: position.longitude,
-          );
-        }
-      } catch (_) {
-        if (context.mounted) {
-          showToast(context, message: 'Could not fetch location', status: 'error');
-        }
-      } finally {
-        isFetchingLocation.value = false;
-      }
+      final result = await LocationService.instance.resolveLocation();
+      isFetchingLocation.value = false;
+      if (!context.mounted) return;
+      result.fold(
+        (failure) => showToast(context, message: failure.message, status: 'error'),
+        (loc) => notifier.setLocation(
+          loc.address,
+          latitude: loc.position.latitude,
+          longitude: loc.position.longitude,
+        ),
+      );
     }
 
     return Scaffold(

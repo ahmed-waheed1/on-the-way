@@ -145,7 +145,7 @@ class RequestHistoryScreen extends HookWidget {
             // ── List ──────────────────────────────────────────────────────────
             Expanded(
               child: switch ((isLoading.value, errorMessage.value)) {
-                (true, _) => Center(
+                (true, _) => const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
                   ),
                 (false, final String msg) => _ErrorState(message: msg, onRetry: load),
@@ -274,7 +274,14 @@ class _SearchField extends StatelessWidget {
               ),
               decoration: InputDecoration(
                 isCollapsed: true,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
                 hintText: 'Search request',
                 hintStyle: TextStyle(
                   fontFamily: AppTypography.robotoFlex,

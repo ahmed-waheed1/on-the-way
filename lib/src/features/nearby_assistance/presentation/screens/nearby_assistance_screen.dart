@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:on_the_way/src/services/location_service.dart';
 import '../../../../shared/app_assets.dart';
 import '../../../../shared/widgets/nearby_empty_state.dart';
 import '../../../../shared/widgets/nearby_no_match_state.dart';
@@ -25,21 +25,6 @@ const _kPrimaryBlue = Color(0xFF025D8C);
 const _kTitleText = Color(0xFF222222);
 
 const _kFilters = ['ALL', 'Type', 'Time', 'Location'];
-
-/// Fetches the current GPS position, requesting permission if needed.
-Future<Position?> _currentPosition() async {
-  LocationPermission permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-  }
-  if (permission == LocationPermission.denied ||
-      permission == LocationPermission.deniedForever) {
-    return null;
-  }
-  return Geolocator.getCurrentPosition(
-    locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-  );
-}
 
 class NearbyAssistanceScreen extends HookWidget {
   const NearbyAssistanceScreen({super.key});
@@ -102,23 +87,28 @@ class NearbyAssistanceScreen extends HookWidget {
     Future<void> load() async {
       isLoading.value = true;
       errorMessage.value = null;
-      final pos = await _currentPosition();
-      if (pos == null) {
-        isLoading.value = false;
-        errorMessage.value = 'Location permission is required to see nearby requests.';
-        return;
-      }
-      final res = await FeedService.instance
-          .nearbyAssistance(lat: pos.latitude, lon: pos.longitude);
-      isLoading.value = false;
-      res.fold(
-        (f) => errorMessage.value = f.message,
-        (data) {
-          final list = (data is List) ? data : const <dynamic>[];
-          requests.value = list
-              .whereType<Map<String, dynamic>>()
-              .map(AssistanceRequest.fromFeedJson)
-              .toList();
+      final locResult = await LocationService.instance.resolveLocation();
+      await locResult.fold(
+        (f) async {
+          isLoading.value = false;
+          errorMessage.value = f.message;
+        },
+        (loc) async {
+          final res = await FeedService.instance.nearbyAssistance(
+            lat: loc.position.latitude,
+            lon: loc.position.longitude,
+          );
+          isLoading.value = false;
+          res.fold(
+            (f) => errorMessage.value = f.message,
+            (data) {
+              final list = (data is List) ? data : const <dynamic>[];
+              requests.value = list
+                  .whereType<Map<String, dynamic>>()
+                  .map(AssistanceRequest.fromFeedJson)
+                  .toList();
+            },
+          );
         },
       );
     }
