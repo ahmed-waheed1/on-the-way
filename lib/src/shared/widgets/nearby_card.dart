@@ -47,15 +47,13 @@ class NearbyCard extends StatelessWidget {
         children: [
           // ── Row 1: avatar + title/subtitle + badge ────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  _Avatar(),
-                  SizedBox(width: 8.w),
-                  _TitleSubtitle(title: title, subtitle: subtitle),
-                ],
+              _Avatar(),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: _TitleSubtitle(title: title, subtitle: subtitle),
               ),
+              SizedBox(width: 8.w),
               _Badge(
                 label: badgeLabel,
                 bg: badgeBg,
@@ -126,6 +124,8 @@ class _TitleSubtitle extends StatelessWidget {
       children: [
         Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.bold,
@@ -137,6 +137,8 @@ class _TitleSubtitle extends StatelessWidget {
         ),
         Text(
           subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.regular,
@@ -166,8 +168,8 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 23.h,
-      width: 87.w,
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      constraints: BoxConstraints(minWidth: 56.w, maxWidth: 130.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.h),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16.r),
@@ -175,6 +177,9 @@ class _Badge extends StatelessWidget {
       child: Center(
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.bold,

@@ -75,6 +75,8 @@ class RequestHistoryCard extends StatelessWidget {
                     SizedBox(height: 2.h),
                     Text(
                       item.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AppTypography.robotoFlex,
                         fontVariations: AppTypography.regular,

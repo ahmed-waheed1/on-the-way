@@ -118,7 +118,7 @@ class RequestDetailsScreen extends StatelessWidget {
               child: Column(
                 children: [
                   AppButton(
-                    label: 'Back to History',
+                    label: 'Back',
                     onPressed: () => context.pop(),
                     variant: ButtonVariant.primary,
                     height: ButtonSize.large,
@@ -127,7 +127,11 @@ class RequestDetailsScreen extends StatelessWidget {
                   SizedBox(height: 16.h),
                   AppButton(
                     label: 'Request Again',
-                    onPressed: () => context.go(AppRoutes.needHelp),
+                    onPressed: () => context.go(
+                      item.type == RequestType.accident
+                          ? AppRoutes.reportAccident
+                          : AppRoutes.needHelp,
+                    ),
                     variant: ButtonVariant.outline,
                     height: ButtonSize.large,
                     isFullWidth: true,
