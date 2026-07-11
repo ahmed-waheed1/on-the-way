@@ -50,91 +50,81 @@ class _EditFieldSheet extends HookWidget {
   Widget build(BuildContext context) {
     final controller = useTextEditingController(text: currentValue);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context).pop(),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.45,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (_, scrollController) => GestureDetector(
-          onTap: () {},
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-            ),
-            padding: EdgeInsets.only(
-              left: 24.w,
-              right: 24.w,
-              top: 16.h,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5E7EB),
-                      borderRadius: BorderRadius.circular(2.r),
-                    ),
+    // Lift the whole sheet above the keyboard by its inset height.
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 24.h),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+                    borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
-                SizedBox(height: 20.h),
+              ),
+              SizedBox(height: 20.h),
 
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: AppTypography.robotoFlex,
-                    fontVariations: AppTypography.bold,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18.sp,
-                    color: AppColors.titleText,
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: AppTypography.robotoFlex,
+                  fontVariations: AppTypography.bold,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18.sp,
+                  color: AppColors.titleText,
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              AppTextField(
+                controller: controller,
+                hint: hint,
+                // TextInputAction.newline requires a multiline keyboard type.
+                keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
+                maxLines: maxLines,
+                obscureText: obscure,
+                autofocus: true,
+                textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
+              ),
+              SizedBox(height: 24.h),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      label: 'Cancel',
+                      onPressed: () => Navigator.of(context).pop(),
+                      variant: ButtonVariant.outline,
+                    ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-
-                AppTextField(
-                  controller: controller,
-                  hint: hint,
-                  // TextInputAction.newline requires a multiline keyboard type.
-                  keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
-                  maxLines: maxLines,
-                  obscureText: obscure,
-                  autofocus: true,
-                  textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
-                ),
-                SizedBox(height: 24.h),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        label: 'Cancel',
-                        onPressed: () => Navigator.of(context).pop(),
-                        variant: ButtonVariant.outline,
-                      ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: AppButton(
+                      label: 'Save',
+                      onPressed: () {
+                        final value = controller.text.trim();
+                        Navigator.of(context).pop(value);
+                      },
+                      variant: ButtonVariant.primary,
                     ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: AppButton(
-                        label: 'Save',
-                        onPressed: () {
-                          final value = controller.text.trim();
-                          Navigator.of(context).pop(value);
-                        },
-                        variant: ButtonVariant.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
