@@ -22,11 +22,13 @@ class DescribeAccidentScreen extends HookConsumerWidget {
       text: ref.read(accidentReportProvider).phoneNumber,
     );
     final pickedImages = useState<List<XFile>>([]);
-    final hasDescription = useState(descriptionController.text.trim().isNotEmpty);
+    final hasDescription =
+        useState(descriptionController.text.trim().isNotEmpty);
     final hasPhone = useState(phoneController.text.trim().isNotEmpty);
 
     useEffect(() {
-      void l() => hasDescription.value = descriptionController.text.trim().isNotEmpty;
+      void l() =>
+          hasDescription.value = descriptionController.text.trim().isNotEmpty;
       descriptionController.addListener(l);
       return () => descriptionController.removeListener(l);
     }, [descriptionController]);
@@ -38,7 +40,11 @@ class DescribeAccidentScreen extends HookConsumerWidget {
     }, [phoneController]);
 
     Future<void> pickImage() async {
-      final file = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final file = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 85,
+      );
       if (file != null) {
         pickedImages.value = [...pickedImages.value, file];
         notifier.setImage(File(file.path));
@@ -151,7 +157,8 @@ class DescribeAccidentScreen extends HookConsumerWidget {
                   _NextButton(
                     enabled: hasDescription.value && hasPhone.value,
                     onTap: () {
-                      notifier.setDescription(descriptionController.text.trim());
+                      notifier
+                          .setDescription(descriptionController.text.trim());
                       notifier.setPhoneNumber(phoneController.text.trim());
                       notifier.setImageCount(pickedImages.value.length);
                       context.push(AppRoutes.reviewAccident);
@@ -268,7 +275,7 @@ class _UploadPhotoBox extends StatelessWidget {
             borderRadius: BorderRadius.circular(12.r),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x40000000),
+                color: Color(0x1F000000),
                 blurRadius: 4,
                 offset: Offset(4, 4),
               ),
@@ -278,7 +285,8 @@ class _UploadPhotoBox extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_a_photo_outlined, size: 32.r, color: AppColors.titleText),
+              Icon(Icons.add_a_photo_outlined,
+                  size: 32.r, color: AppColors.titleText),
               SizedBox(height: 18.h),
               Text(
                 'Upload Photo',
@@ -381,7 +389,9 @@ class _DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashedBorderPainter old) =>
-      old.color != color || old.strokeWidth != strokeWidth || old.radius != radius;
+      old.color != color ||
+      old.strokeWidth != strokeWidth ||
+      old.radius != radius;
 }
 
 // ── Phone field ─────────────────────────────────────────────────────────────────
@@ -407,6 +417,9 @@ class _PhoneField extends StatelessWidget {
             child: TextField(
               controller: controller,
               keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[\d+\-\s()]')),
+              ],
               cursorColor: AppColors.primary,
               style: TextStyle(
                 fontFamily: AppTypography.robotoFlex,
@@ -472,28 +485,35 @@ class _NextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: enabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.4),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: enabled
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(12.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Next',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              'Next',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),
@@ -509,25 +529,32 @@ class _CancelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary, width: 2),
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Cancel',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: AppColors.primary,
-            height: 20 / 16,
+    return Container(
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14.r),
+          child: Center(
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: AppColors.primary,
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),

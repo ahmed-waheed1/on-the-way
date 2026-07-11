@@ -13,11 +13,22 @@ class ReportAccidentScreen extends HookConsumerWidget {
   const ReportAccidentScreen({super.key});
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
-  String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+  String _formatDate(DateTime d) =>
+      '${d.day} ${_months[d.month - 1]} ${d.year}';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,7 +65,8 @@ class ReportAccidentScreen extends HookConsumerWidget {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (context.mounted) {
-            showToast(context, message: 'Location permission denied', status: 'error');
+            showToast(context,
+                message: 'Location permission denied', status: 'error');
           }
           return;
         }
@@ -67,10 +79,11 @@ class ReportAccidentScreen extends HookConsumerWidget {
       isFetchingLocation.value = true;
       try {
         final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.medium),
         );
-        final placemarks =
-            await placemarkFromCoordinates(position.latitude, position.longitude);
+        final placemarks = await placemarkFromCoordinates(
+            position.latitude, position.longitude);
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           final parts = [p.subLocality, p.locality, p.administrativeArea]
@@ -93,10 +106,11 @@ class ReportAccidentScreen extends HookConsumerWidget {
         }
       } catch (_) {
         if (context.mounted) {
-          showToast(context, message: 'Could not fetch location', status: 'error');
+          showToast(context,
+              message: 'Could not fetch location', status: 'error');
         }
       } finally {
-        isFetchingLocation.value = false;
+        if (context.mounted) isFetchingLocation.value = false;
       }
     }
 
@@ -132,7 +146,8 @@ class ReportAccidentScreen extends HookConsumerWidget {
                     const _FieldLabel('Date'),
                     SizedBox(height: 8.h),
                     _SelectField(
-                      value: draft.date == null ? null : _formatDate(draft.date!),
+                      value:
+                          draft.date == null ? null : _formatDate(draft.date!),
                       placeholder: 'Select date',
                       trailing: Icon(Icons.calendar_today_outlined,
                           size: 20.r, color: _kPlaceholderColor),
@@ -181,7 +196,8 @@ class ReportAccidentScreen extends HookConsumerWidget {
 
 // ── Accident type bottom sheet ──────────────────────────────────────────────────
 
-Future<AccidentType?> _showTypeSheet(BuildContext context, AccidentType? current) {
+Future<AccidentType?> _showTypeSheet(
+    BuildContext context, AccidentType? current) {
   return showModalBottomSheet<AccidentType>(
     context: context,
     backgroundColor: Colors.white,
@@ -224,10 +240,13 @@ Future<AccidentType?> _showTypeSheet(BuildContext context, AccidentType? current
                   type.label,
                   style: TextStyle(
                     fontFamily: AppTypography.robotoFlex,
-                    fontVariations:
-                        type == current ? AppTypography.bold : AppTypography.regular,
+                    fontVariations: type == current
+                        ? AppTypography.bold
+                        : AppTypography.regular,
                     fontSize: 16.sp,
-                    color: type == current ? AppColors.primary : AppColors.titleText,
+                    color: type == current
+                        ? AppColors.primary
+                        : AppColors.titleText,
                   ),
                 ),
                 trailing: type == current
@@ -305,7 +324,8 @@ class _SelectField extends StatelessWidget {
                   fontVariations: AppTypography.regular,
                   fontWeight: FontWeight.w400,
                   fontSize: 12.sp,
-                  color: isPlaceholder ? _kPlaceholderColor : AppColors.titleText,
+                  color:
+                      isPlaceholder ? _kPlaceholderColor : AppColors.titleText,
                   height: 20 / 12,
                 ),
               ),
@@ -356,28 +376,35 @@ class _NextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: enabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.4),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: enabled
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(12.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Next',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              'Next',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),

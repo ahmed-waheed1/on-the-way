@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:fpdart/fpdart.dart';
 
+import '../config/app_config.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_endpoints.dart';
 import '../core/network/token_store.dart';
@@ -17,7 +18,9 @@ import 'secure_storage_service.dart';
 /// the JWT is persisted via [TokenStore] and the user profile via secure
 /// storage (the API exposes no "get current user" endpoint).
 class AuthService {
-  AuthService._();
+  AuthService._() {
+    AppConfig.onSessionExpired = handleSessionExpired;
+  }
   static final AuthService instance = AuthService._();
 
   static const _userKey = 'auth_user_json';
@@ -27,7 +30,8 @@ class AuthService {
   final StreamController<Map<String, dynamic>?> _authStateController =
       StreamController<Map<String, dynamic>?>.broadcast();
 
-  Stream<Map<String, dynamic>?> get authStateChanges => _authStateController.stream;
+  Stream<Map<String, dynamic>?> get authStateChanges =>
+      _authStateController.stream;
 
   // ── Registration & verification ─────────────────────────────────────────
 
@@ -68,7 +72,8 @@ class AuthService {
     );
   }
 
-  FutureEither<Map<String, dynamic>?> googleLogin({required String idToken}) async {
+  FutureEither<Map<String, dynamic>?> googleLogin(
+      {required String idToken}) async {
     final result = await _api.post<dynamic>(
       ApiEndpoints.googleLogin,
       data: {'idToken': idToken},
@@ -110,6 +115,14 @@ class AuthService {
     return right(null);
   }
 
+  /// Called when the API rejects our token (401) — clears the session and
+  /// notifies listeners so the app navigates back to sign-in.
+  Future<void> handleSessionExpired() async {
+    await TokenStore.instance.clear();
+    await SecureStorageService.instance.delete(_userKey);
+    _authStateController.add(null);
+  }
+
   /// Restores the persisted user if a token is present.
   FutureEither<Map<String, dynamic>?> getCurrentUser() async {
     if (!TokenStore.instance.hasToken) return right(null);
@@ -125,7 +138,8 @@ class AuthService {
   }
 
   /// Persists profile edits locally (no profile API exists) and re-emits state.
-  FutureEither<Map<String, dynamic>> saveLocalUser(Map<String, dynamic> user) async {
+  FutureEither<Map<String, dynamic>> saveLocalUser(
+      Map<String, dynamic> user) async {
     await SecureStorageService.instance.write(_userKey, jsonEncode(user));
     _authStateController.add(user);
     return right(user);
@@ -139,7 +153,8 @@ class AuthService {
   }) async {
     final token = _extractToken(data);
     if (token == null || token.isEmpty) {
-      return left(const ServerFailure('Login succeeded but no token was returned.'));
+      return left(
+          const ServerFailure('Login succeeded but no token was returned.'));
     }
     await TokenStore.instance.save(token);
 
@@ -153,7 +168,13 @@ class AuthService {
   String? _extractToken(dynamic data) {
     if (data is String) return data;
     if (data is Map) {
-      for (final key in ['token', 'accessToken', 'access_token', 'jwt', 'jwtToken']) {
+      for (final key in [
+        'token',
+        'accessToken',
+        'access_token',
+        'jwt',
+        'jwtToken'
+      ]) {
         final v = data[key];
         if (v is String && v.isNotEmpty) return v;
       }
@@ -165,7 +186,8 @@ class AuthService {
   }
 
   /// Builds a user map from the payload, falling back to JWT claims.
-  Map<String, dynamic> _extractUser(dynamic data, String token, {String? fallbackEmail}) {
+  Map<String, dynamic> _extractUser(dynamic data, String token,
+      {String? fallbackEmail}) {
     Map<String, dynamic>? raw;
     if (data is Map) {
       final u = data['user'];
@@ -185,17 +207,26 @@ class AuthService {
 
     return {
       'id': pick(raw, ['id', 'userId', 'sub']) ??
-          pick(claims, ['sub', 'nameid',
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']) ??
+          pick(claims, [
+            'sub',
+            'nameid',
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+          ]) ??
           '',
       'email': pick(raw, ['email']) ??
-          pick(claims, ['email',
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']) ??
+          pick(claims, [
+            'email',
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+          ]) ??
           fallbackEmail ??
           '',
       'name': pick(raw, ['fullName', 'name', 'userName']) ??
-          pick(claims, ['FullName', 'name', 'unique_name',
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']),
+          pick(claims, [
+            'FullName',
+            'name',
+            'unique_name',
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+          ]),
       'phone': pick(raw, ['phoneNumber', 'phone']),
       'username': pick(raw, ['userName', 'username']),
       'bio': pick(raw, ['bio']),

@@ -38,24 +38,30 @@ class NearbyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(8.r),
+      padding: EdgeInsets.all(10.r),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12.r),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
           // ── Row 1: avatar + title/subtitle + badge ────────────────────────
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  _Avatar(),
-                  SizedBox(width: 8.w),
-                  _TitleSubtitle(title: title, subtitle: subtitle),
-                ],
+              _Avatar(),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: _TitleSubtitle(title: title, subtitle: subtitle),
               ),
+              SizedBox(width: 8.w),
               _Badge(
                 label: badgeLabel,
                 bg: badgeBg,
@@ -75,13 +81,14 @@ class NearbyCard extends StatelessWidget {
                   onTap: onViewDetails,
                 ),
               ),
-              SizedBox(width: 4.w),
+              SizedBox(width: 6.w),
               Expanded(
                 child: _CardButton(
-                  label: isActionBusy ? '…' : actionLabel,
+                  label: actionLabel,
                   bg: AppColors.offerHelpBg,
                   textColor: AppColors.offerHelpText,
-                  onTap: isActionBusy ? () {} : onOfferHelp,
+                  onTap: isActionBusy ? null : onOfferHelp,
+                  isBusy: isActionBusy,
                 ),
               ),
             ],
@@ -126,6 +133,8 @@ class _TitleSubtitle extends StatelessWidget {
       children: [
         Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.bold,
@@ -137,6 +146,8 @@ class _TitleSubtitle extends StatelessWidget {
         ),
         Text(
           subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.regular,
@@ -165,16 +176,18 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 23.h,
-      width: 87.w,
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      constraints: BoxConstraints(minWidth: 87.w, minHeight: 23.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.h),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Center(
+        widthFactor: 1,
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTypography.robotoFlex,
             fontVariations: AppTypography.bold,
@@ -195,34 +208,51 @@ class _CardButton extends StatelessWidget {
     required this.bg,
     required this.textColor,
     required this.onTap,
+    this.isBusy = false,
   });
 
   final String label;
   final Color bg;
   final Color textColor;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isBusy;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 39.h,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppTypography.robotoFlex,
-              fontVariations: AppTypography.regular,
-              fontWeight: FontWeight.w400,
-              fontSize: 14.sp,
-              color: textColor,
-              height: 20 / 14,
-            ),
+    final radius = BorderRadius.circular(8.r);
+    return Container(
+      height: 39.h,
+      decoration: BoxDecoration(color: bg, borderRadius: radius),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Center(
+            child: isBusy
+                ? SizedBox(
+                    width: 16.r,
+                    height: 16.r,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: textColor,
+                    ),
+                  )
+                : Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTypography.robotoFlex,
+                      fontVariations: AppTypography.regular,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14.sp,
+                      color: textColor,
+                      height: 20 / 14,
+                    ),
+                  ),
           ),
         ),
       ),

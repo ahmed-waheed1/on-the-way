@@ -12,6 +12,10 @@ class AppConfig {
   static late final Account appwriteAccount;
   static late final Storage appwriteStorage;
 
+  /// Invoked when the API returns 401 so the auth layer can clear the session
+  /// and route the user back to sign-in. Wired up in [AuthService].
+  static Future<void> Function()? onSessionExpired;
+
   static String get avatarBucketId =>
       dotenv.get('APPWRITE_AVATAR_BUCKET_ID', fallback: '');
 
@@ -19,8 +23,10 @@ class AppConfig {
 
   static Future<void> init() async {
     appwriteClient = Client()
-      ..setEndpoint(dotenv.get('APPWRITE_ENDPOINT', fallback: 'https://cloud.appwrite.io/v1'))
-      ..setProject(dotenv.get('APPWRITE_PROJECT_ID', fallback: 'your-project-id'))
+      ..setEndpoint(dotenv.get('APPWRITE_ENDPOINT',
+          fallback: 'https://cloud.appwrite.io/v1'))
+      ..setProject(
+          dotenv.get('APPWRITE_PROJECT_ID', fallback: 'your-project-id'))
       ..setSelfSigned(status: true);
     appwriteAccount = Account(appwriteClient);
     appwriteStorage = Storage(appwriteClient);
@@ -46,18 +52,28 @@ class AppConfig {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          AppLogger.info('🌐 [DIO] REQUEST[${options.method}] => PATH: ${options.path}');
+          AppLogger.info(
+              '🌐 [DIO] REQUEST[${options.method}] => PATH: ${options.path}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          AppLogger.info('✅ [DIO] RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+          AppLogger.info(
+              '✅ [DIO] RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
-          AppLogger.error('❌ [DIO] ERROR[${e.response?.statusCode}] => PATH: ${e.requestOptions.path}');
-          // Token expired / invalid — drop it so the app returns to sign-in.
-          if (e.response?.statusCode == 401) {
-            await TokenStore.instance.clear();
+          AppLogger.error(
+              '❌ [DIO] ERROR[${e.response?.statusCode}] => PATH: ${e.requestOptions.path}');
+          // Token expired / invalid — drop the session so the app returns to
+          // sign-in (skip for the login/register endpoints themselves).
+          final path = e.requestOptions.path;
+          final isAuthCall = path.contains('/api/auth/');
+          if (e.response?.statusCode == 401 && !isAuthCall) {
+            if (onSessionExpired != null) {
+              await onSessionExpired!();
+            } else {
+              await TokenStore.instance.clear();
+            }
           }
           return handler.next(e);
         },

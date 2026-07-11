@@ -1,3 +1,4 @@
+export 'app_bottom_nav_bar.dart';
 export 'app_button.dart';
 export 'nearby_card.dart';
 export 'nearby_filter_row.dart';

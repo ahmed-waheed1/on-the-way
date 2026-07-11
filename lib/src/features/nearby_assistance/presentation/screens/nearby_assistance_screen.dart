@@ -19,6 +19,8 @@ import 'package:on_the_way/src/features/need_help/data/assistance_service.dart';
 import 'package:on_the_way/src/features/request_history/domain/entities/request_history_item.dart';
 import 'package:on_the_way/src/routing/app_routes.dart';
 import 'package:on_the_way/src/shared/helpers/show_toast.dart';
+import 'package:on_the_way/src/utils/api_parsing.dart';
+import 'package:on_the_way/src/shared/widgets/app_bottom_nav_bar.dart';
 
 const _kBg = Color(0xFFF5F6F8);
 const _kPrimaryBlue = Color(0xFF025D8C);
@@ -48,11 +50,12 @@ class NearbyAssistanceScreen extends HookWidget {
   Widget build(BuildContext context) {
     // ── Filter state ──────────────────────────────────────────────────────────
     final selectedTypes = useState<Set<AssistanceType>>({});
-    final sortAscending = useState(true);   // true = nearest first
+    final sortAscending = useState(true); // true = nearest first
     final maxDistanceKm = useState<double?>(null); // null = any
 
     // ── Live feed state ───────────────────────────────────────────────────────
-    final requests = useState<List<AssistanceRequest>>(const <AssistanceRequest>[]);
+    final requests =
+        useState<List<AssistanceRequest>>(const <AssistanceRequest>[]);
     final isLoading = useState(true);
     final errorMessage = useState<String?>(null);
     final offeringId = useState<String?>(null);
@@ -105,7 +108,8 @@ class NearbyAssistanceScreen extends HookWidget {
       final pos = await _currentPosition();
       if (pos == null) {
         isLoading.value = false;
-        errorMessage.value = 'Location permission is required to see nearby requests.';
+        errorMessage.value =
+            'Location permission is required to see nearby requests.';
         return;
       }
       final res = await FeedService.instance
@@ -114,9 +118,7 @@ class NearbyAssistanceScreen extends HookWidget {
       res.fold(
         (f) => errorMessage.value = f.message,
         (data) {
-          final list = (data is List) ? data : const <dynamic>[];
-          requests.value = list
-              .whereType<Map<String, dynamic>>()
+          requests.value = extractJsonList(data)
               .map(AssistanceRequest.fromFeedJson)
               .toList();
         },
@@ -159,7 +161,12 @@ class NearbyAssistanceScreen extends HookWidget {
           : b.distanceKm.compareTo(a.distanceKm));
 
       return result;
-    }, [requests.value, selectedTypes.value, sortAscending.value, maxDistanceKm.value]);
+    }, [
+      requests.value,
+      selectedTypes.value,
+      sortAscending.value,
+      maxDistanceKm.value
+    ]);
 
     // ── Bottom-sheet helpers ──────────────────────────────────────────────────
     void openTypeSheet() async {
@@ -209,6 +216,7 @@ class NearbyAssistanceScreen extends HookWidget {
     // ── UI ────────────────────────────────────────────────────────────────────
     return Scaffold(
       backgroundColor: _kBg,
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 18.h),
@@ -227,9 +235,12 @@ class NearbyAssistanceScreen extends HookWidget {
               SizedBox(height: 36.h),
               Expanded(
                 child: isLoading.value
-                    ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? const Center(
+                        child:
+                            CircularProgressIndicator(color: AppColors.primary))
                     : errorMessage.value != null
-                        ? _FeedError(message: errorMessage.value!, onRetry: load)
+                        ? _FeedError(
+                            message: errorMessage.value!, onRetry: load)
                         : requests.value.isEmpty
                             ? const NearbyEmptyState()
                             : filtered.isEmpty
@@ -238,15 +249,19 @@ class NearbyAssistanceScreen extends HookWidget {
                                     onRefresh: load,
                                     color: AppColors.primary,
                                     child: ListView.separated(
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
                                       itemCount: filtered.length,
-                                      separatorBuilder: (_, __) => SizedBox(height: 15.h),
+                                      separatorBuilder: (_, __) =>
+                                          SizedBox(height: 15.h),
                                       itemBuilder: (context, index) {
                                         final req = filtered[index];
                                         return AssistanceCard(
                                           request: req,
                                           onViewDetails: () => openDetails(req),
                                           onOfferHelp: () => offerHelp(req),
-                                          isOffering: offeringId.value == req.id,
+                                          isOffering:
+                                              offeringId.value == req.id,
                                         );
                                       },
                                     ),
@@ -276,7 +291,8 @@ class _FeedError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40.r, color: AppColors.distanceText),
+            Icon(Icons.error_outline,
+                size: 40.r, color: AppColors.distanceText),
             SizedBox(height: 12.h),
             Text(
               message,
@@ -323,11 +339,20 @@ class _TopBar extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
-          onTap: () => context.pop(),
-          child: SvgPicture.asset(
-            AppAssets.arrowBack,
-            width: 16.r,
-            height: 16.r,
+          onTap: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
+          child: Padding(
+            padding: EdgeInsets.all(6.r),
+            child: SvgPicture.asset(
+              AppAssets.arrowBack,
+              width: 16.r,
+              height: 16.r,
+            ),
           ),
         ),
         Text(
@@ -353,7 +378,6 @@ class _TopBar extends StatelessWidget {
     );
   }
 }
-
 
 // ── Bottom sheets ─────────────────────────────────────────────────────────────
 
@@ -382,7 +406,8 @@ Future<bool?> _showTimeSheet(BuildContext context, bool current) {
   );
 }
 
-Future<_DistanceResult?> _showLocationSheet(BuildContext context, double? current) {
+Future<_DistanceResult?> _showLocationSheet(
+    BuildContext context, double? current) {
   return showModalBottomSheet<_DistanceResult>(
     context: context,
     backgroundColor: AppColors.screenBackground,
@@ -466,7 +491,8 @@ class _TypeFilterSheet extends HookWidget {
                   type.label,
                   style: TextStyle(
                     fontFamily: AppTypography.robotoFlex,
-                    fontVariations: isOn ? AppTypography.semiBold : AppTypography.regular,
+                    fontVariations:
+                        isOn ? AppTypography.semiBold : AppTypography.regular,
                     fontWeight: isOn ? FontWeight.w600 : FontWeight.w400,
                     fontSize: 12.sp,
                     color: isOn ? Colors.white : AppColors.titleText,
@@ -591,7 +617,8 @@ class _LocationFilterSheet extends HookWidget {
           SizedBox(height: 24.h),
           _SheetActions(
             onClear: () => Navigator.pop(context, const _DistanceResult(null)),
-            onApply: () => Navigator.pop(context, _DistanceResult(selected.value)),
+            onApply: () =>
+                Navigator.pop(context, _DistanceResult(selected.value)),
           ),
         ],
       ),
@@ -654,7 +681,9 @@ class _AllFiltersSheet extends HookWidget {
                         t.label,
                         style: TextStyle(
                           fontFamily: AppTypography.robotoFlex,
-                          fontVariations: isOn ? AppTypography.semiBold : AppTypography.regular,
+                          fontVariations: isOn
+                              ? AppTypography.semiBold
+                              : AppTypography.regular,
                           fontWeight: isOn ? FontWeight.w600 : FontWeight.w400,
                           fontSize: 12.sp,
                           color: isOn ? Colors.white : AppColors.titleText,
@@ -665,7 +694,8 @@ class _AllFiltersSheet extends HookWidget {
                       backgroundColor: Colors.white,
                       selectedColor: AppColors.primary,
                       side: BorderSide(
-                        color: isOn ? AppColors.primary : const Color(0xFFE0E0E0),
+                        color:
+                            isOn ? AppColors.primary : const Color(0xFFE0E0E0),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),

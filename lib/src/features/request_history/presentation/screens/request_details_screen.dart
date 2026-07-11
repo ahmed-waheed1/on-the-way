@@ -17,8 +17,18 @@ class RequestDetailsScreen extends StatelessWidget {
   final RequestHistoryItem item;
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String get _formattedDateTime {
@@ -53,7 +63,8 @@ class RequestDetailsScreen extends StatelessWidget {
                       // ── Request Details section ───────────────────────────
                       const _SectionTitle('Request Details', size: 16),
                       SizedBox(height: 16.h),
-                      _DetailRow(label: 'Incident Type', value: item.incidentType),
+                      _DetailRow(
+                          label: 'Incident Type', value: item.incidentType),
                       SizedBox(height: 12.h),
                       _DetailRow(label: 'Date', value: _formattedDateTime),
                       SizedBox(height: 16.h),
@@ -88,7 +99,8 @@ class RequestDetailsScreen extends StatelessWidget {
                       ],
                       SizedBox(height: 24.h),
 
-                      const Divider(height: 1, thickness: 2, color: Color(0xFFE5E7EB)),
+                      const Divider(
+                          height: 1, thickness: 2, color: Color(0xFFE5E7EB)),
                       SizedBox(height: 24.h),
 
                       // ── Location section ──────────────────────────────────
@@ -191,7 +203,8 @@ class _HeaderCard extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(item.status.icon, size: 16.r, color: item.status.accentColor),
+                    Icon(item.status.icon,
+                        size: 16.r, color: item.status.accentColor),
                     SizedBox(width: 8.w),
                     Text(
                       item.status.label,
@@ -234,13 +247,15 @@ class _AttachedPhoto extends StatelessWidget {
           height: 180.h,
           color: const Color(0xFFF3F4F6),
           alignment: Alignment.center,
-          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+          child: const CircularProgressIndicator(
+              color: AppColors.primary, strokeWidth: 2),
         ),
         errorWidget: (_, __, ___) => Container(
           height: 180.h,
           color: const Color(0xFFF3F4F6),
           alignment: Alignment.center,
-          child: Icon(Icons.broken_image_outlined, size: 32.r, color: AppColors.distanceText),
+          child: Icon(Icons.broken_image_outlined,
+              size: 32.r, color: AppColors.distanceText),
         ),
       ),
     );

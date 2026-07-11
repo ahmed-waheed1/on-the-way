@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../routing/app_routes.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
+import '../providers/help_request_provider.dart';
 
 const _kStepTextColor = Color(0xFF6B7280);
 const _kProgressTrack = Color(0xFFD9D9D9);
 const _kIconCircleBg = Color(0xFF9FD3EB);
 
-class RequestSentScreen extends StatelessWidget {
+class RequestSentScreen extends ConsumerWidget {
   const RequestSentScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    void goHome() {
+      // Clear the draft so the next "Need Help" flow starts fresh.
+      ref.read(helpRequestProvider.notifier).reset();
+      context.go(AppRoutes.home);
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -58,9 +66,7 @@ class RequestSentScreen extends StatelessWidget {
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 28.h),
-              child: _BackToHomeButton(
-                onTap: () => context.go(AppRoutes.home),
-              ),
+              child: _BackToHomeButton(onTap: goHome),
             ),
           ],
         ),
@@ -116,7 +122,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           SizedBox(height: 14.h),
-          Center(child: _StepDots(total: 4, current: 3)),
+          const Center(child: _StepDots(total: 4, current: 3)),
         ],
       ),
     );
@@ -159,25 +165,32 @@ class _BackToHomeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 57.h,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
+    return Container(
+      width: double.infinity,
+      height: 57.h,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Back To Home',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              'Back To Home',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),

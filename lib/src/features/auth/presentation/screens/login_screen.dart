@@ -1,7 +1,6 @@
 import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
-
 import 'package:on_the_way/src/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends HookConsumerWidget {
@@ -14,6 +13,7 @@ class LoginScreen extends HookConsumerWidget {
     final emailController = useTextEditingController();
     final passwordController = useTextEditingController();
     final obscurePassword = useState(true);
+    final rememberMe = useState(true);
 
     final isLoading = ref.watch(authControllerProvider);
 
@@ -26,10 +26,10 @@ class LoginScreen extends HookConsumerWidget {
       }
 
       ref.read(authControllerProvider.notifier).login(
-        context: context, 
-        email: emailController.text, 
-        password: passwordController.text,
-      );
+            context: context,
+            email: emailController.text,
+            password: passwordController.text,
+          );
     }
 
     return Scaffold(
@@ -43,7 +43,8 @@ class LoginScreen extends HookConsumerWidget {
                 SizedBox(height: AppSpacing.xl.h),
                 Text(
                   'auth.log_in'.tr(),
-                  style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style:
+                      tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: AppSpacing.sm.h),
                 Text(
@@ -80,10 +81,13 @@ class LoginScreen extends HookConsumerWidget {
                         obscureText: obscurePassword.value,
                         prefixIcon: const Icon(IconsaxPlusBold.lock),
                         suffixIcon: IconButton(
-                          icon: Icon(obscurePassword.value ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => obscurePassword.value = !obscurePassword.value,
+                          icon: Icon(obscurePassword.value
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () =>
+                              obscurePassword.value = !obscurePassword.value,
                         ),
-                         validator: (v) {
+                        validator: (v) {
                           if (AppUtils.isBlank(v)) {
                             return 'auth.password_required'.tr();
                           }
@@ -104,13 +108,15 @@ class LoginScreen extends HookConsumerWidget {
                                 width: 20.w,
                                 height: 20.h,
                                 child: Checkbox(
-                                  value: true,
-                                  onChanged: (value) {},
+                                  value: rememberMe.value,
+                                  onChanged: (value) =>
+                                      rememberMe.value = value ?? true,
                                 ),
                               ),
                               Text(
                                 'auth.remember_me'.tr(),
-                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                style: tt.bodySmall
+                                    ?.copyWith(color: cs.onSurfaceVariant),
                               ),
                             ],
                           ),
@@ -152,9 +158,12 @@ class LoginScreen extends HookConsumerWidget {
                           width: 50.w,
                           height: 50.w,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => showToast(context,
+                                message: 'Social sign-in is coming soon',
+                                status: 'info'),
                             style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFEA4335).withValues(alpha: 0.8),
+                              backgroundColor: const Color(0xFFEA4335)
+                                  .withValues(alpha: 0.8),
                               padding: EdgeInsets.symmetric(horizontal: 10.w),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: AppBorders.button,
@@ -167,7 +176,9 @@ class LoginScreen extends HookConsumerWidget {
                           width: 50.w,
                           height: 50.w,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => showToast(context,
+                                message: 'Social sign-in is coming soon',
+                                status: 'info'),
                             style: TextButton.styleFrom(
                               backgroundColor: const Color(0xFF4285F4),
                               padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -182,7 +193,9 @@ class LoginScreen extends HookConsumerWidget {
                           width: 50.w,
                           height: 50.w,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => showToast(context,
+                                message: 'Social sign-in is coming soon',
+                                status: 'info'),
                             style: TextButton.styleFrom(
                               backgroundColor: const Color(0xFF000000),
                               padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -205,7 +218,8 @@ class LoginScreen extends HookConsumerWidget {
                   child: RichText(
                     text: TextSpan(
                       text: 'auth.dont_have_account'.tr(),
-                      style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                      style:
+                          tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                       children: [
                         TextSpan(
                           text: 'auth.sign_up'.tr(),

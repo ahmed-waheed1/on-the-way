@@ -27,7 +27,8 @@ class AppUser extends Equatable {
     String? phone,
     String? username,
     String? bio,
-  }) => AppUser(
+  }) =>
+      AppUser(
         id: id ?? this.id,
         email: email ?? this.email,
         name: name ?? this.name,

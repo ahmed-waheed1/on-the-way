@@ -12,7 +12,8 @@ class HistoryService {
 
   final ApiClient _api = ApiClient.instance;
 
-  FutureEither<dynamic> getHistory({String? search, String? status, String? sortBy}) {
+  FutureEither<dynamic> getHistory(
+      {String? search, String? status, String? sortBy}) {
     return _api.get<dynamic>(ApiEndpoints.history, query: {
       if (search != null && search.isNotEmpty) 'search': search,
       if (status != null && status.isNotEmpty) 'status': status,

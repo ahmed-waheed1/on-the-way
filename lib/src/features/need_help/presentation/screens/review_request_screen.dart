@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -20,9 +22,17 @@ const _kEditColor = Color(0xFF185AC2);
 const _kValueColor = Color(0xFFB1B6B6);
 const _kDescriptionTextColor = Color(0xFF6B7280);
 
-// Map image from Figma — replace with a real map widget in production
-const _kMapImageUrl =
-    'https://www.figma.com/api/mcp/asset/fa112750-fd3b-413a-a2df-c7bf44f42e79';
+/// Builds an OpenStreetMap tile URL centred on the given coordinates so the
+/// review screen shows the user's real location (no API key needed).
+String _osmTileUrl(double lat, double lon, {int zoom = 15}) {
+  final x = ((lon + 180) / 360 * (1 << zoom)).floor();
+  final latRad = lat * math.pi / 180;
+  final y = ((1 - math.log(math.tan(latRad) + 1 / math.cos(latRad)) / math.pi) /
+          2 *
+          (1 << zoom))
+      .floor();
+  return 'https://tile.openstreetmap.org/$zoom/$x/$y.png';
+}
 
 class ReviewRequestScreen extends HookConsumerWidget {
   const ReviewRequestScreen({super.key});
@@ -72,11 +82,9 @@ class ReviewRequestScreen extends HookConsumerWidget {
         ? '${helpRequest.imageCount} photo attached'
         : 'No photos';
     final descText = helpRequest.description;
-    final address =
-        helpRequest.location.isEmpty ? '-' : helpRequest.location;
-    final contact = (user != null && user.isNotEmpty)
-        ? (user.phone ?? user.email)
-        : '-';
+    final address = helpRequest.location.isEmpty ? '-' : helpRequest.location;
+    final contact =
+        (user != null && user.isNotEmpty) ? (user.phone ?? user.email) : '-';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -138,7 +146,10 @@ class ReviewRequestScreen extends HookConsumerWidget {
                       onEdit: () => context.pop(),
                     ),
                     SizedBox(height: 20.h),
-                    const _MapImage(),
+                    _MapImage(
+                      latitude: helpRequest.latitude,
+                      longitude: helpRequest.longitude,
+                    ),
                     SizedBox(height: 16.h),
                     _DetailRow(
                       icon: Icons.phone_outlined,
@@ -394,10 +405,14 @@ class _DetailRow extends StatelessWidget {
 // ── Map image ─────────────────────────────────────────────────────────────────
 
 class _MapImage extends StatelessWidget {
-  const _MapImage();
+  const _MapImage({this.latitude, this.longitude});
+
+  final double? latitude;
+  final double? longitude;
 
   @override
   Widget build(BuildContext context) {
+    final hasLocation = latitude != null && longitude != null;
     return Container(
       height: 165.h,
       width: double.infinity,
@@ -405,7 +420,7 @@ class _MapImage extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x40000000),
+            color: Color(0x1F000000),
             blurRadius: 8,
             offset: Offset(4, 8),
           ),
@@ -413,11 +428,43 @@ class _MapImage extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
-        child: CachedNetworkImage(
-          imageUrl: _kMapImageUrl,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => Container(color: _kProgressTrack),
-          errorWidget: (_, __, ___) => Container(color: _kProgressTrack),
+        child: hasLocation
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedNetworkImage(
+                    imageUrl: _osmTileUrl(latitude!, longitude!),
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(color: _kProgressTrack),
+                    errorWidget: (_, __, ___) => const _MapFallback(),
+                  ),
+                  Center(
+                    child: Icon(
+                      Icons.location_pin,
+                      size: 36.r,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              )
+            : const _MapFallback(),
+      ),
+    );
+  }
+}
+
+class _MapFallback extends StatelessWidget {
+  const _MapFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: _kProgressTrack,
+      child: Center(
+        child: Icon(
+          Icons.map_outlined,
+          size: 40.r,
+          color: Colors.grey,
         ),
       ),
     );
@@ -433,25 +480,32 @@ class _ConfirmButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 57.h,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
+    return Container(
+      width: double.infinity,
+      height: 57.h,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),
@@ -467,25 +521,32 @@ class _CancelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 57.h,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary, width: 2),
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Cancel',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: AppColors.primary,
-            height: 20 / 16,
+    return Container(
+      width: double.infinity,
+      height: 57.h,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14.r),
+          child: Center(
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: AppColors.primary,
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),

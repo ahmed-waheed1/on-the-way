@@ -25,7 +25,9 @@ enum AssistanceType {
     if (value is int && value >= 0 && value < 4) {
       return AssistanceType.values[value];
     }
-    final s = (value?.toString() ?? '').toLowerCase().replaceAll(RegExp(r'[\s_]'), '');
+    final s = (value?.toString() ?? '')
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\s_]'), '');
     return switch (s) {
       'carbreakdown' || 'breakdown' => AssistanceType.carBreakdown,
       'flattire' => AssistanceType.flatTire,

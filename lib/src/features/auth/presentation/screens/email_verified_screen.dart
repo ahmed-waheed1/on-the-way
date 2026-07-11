@@ -27,7 +27,8 @@ class EmailVerifiedScreen extends StatelessWidget {
                     color: _kCircleBg,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.check_rounded, size: 54.r, color: _kCheckColor),
+                  child: Icon(Icons.check_rounded,
+                      size: 54.r, color: _kCheckColor),
                 ),
                 SizedBox(height: 52.h),
 
@@ -63,25 +64,32 @@ class EmailVerifiedScreen extends StatelessWidget {
                 SizedBox(height: 68.h),
 
                 // ── Continue ──────────────────────────────────────────────────
-                GestureDetector(
-                  onTap: () => context.go(AppRoutes.home),
-                  child: Container(
-                    width: double.infinity,
-                    height: 48.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
+                Container(
+                  width: double.infinity,
+                  height: 48.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12.r),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => context.go(AppRoutes.home),
                       borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Continue to Home',
-                      style: TextStyle(
-                        fontFamily: AppTypography.robotoFlex,
-                        fontVariations: AppTypography.black,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16.sp,
-                        color: Colors.white,
-                        height: 20 / 16,
+                      child: Center(
+                        child: Text(
+                          'Continue to Home',
+                          style: TextStyle(
+                            fontFamily: AppTypography.robotoFlex,
+                            fontVariations: AppTypography.black,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16.sp,
+                            color: Colors.white,
+                            height: 20 / 16,
+                          ),
+                        ),
                       ),
                     ),
                   ),

@@ -149,7 +149,7 @@ class _OtpBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(4.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x40000000),
+            color: Color(0x1F000000),
             blurRadius: 4,
             offset: Offset(0, 4),
           ),
@@ -162,6 +162,7 @@ class _OtpBox extends StatelessWidget {
         focusNode: focusNode,
         onChanged: onChanged,
         keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         textAlign: TextAlign.center,
         maxLength: 1,
         cursorColor: AppColors.primary,

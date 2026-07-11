@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:on_the_way/src/routing/global_navigator.dart';
 import 'package:on_the_way/src/routing/app_routes.dart';
@@ -31,6 +32,40 @@ import 'package:on_the_way/src/features/report_accident/presentation/screens/rev
 import 'package:on_the_way/src/features/report_accident/presentation/screens/report_sent_screen.dart';
 import 'package:on_the_way/src/features/manage_roads/presentation/screens/manage_roads_screen.dart';
 
+/// Smooth, subtle fade+slide transition used app-wide. Tab roots
+/// (home / nearby / account) use a plain fade so switching tabs feels instant.
+CustomTransitionPage<void> _page(
+  GoRouterState state,
+  Widget child, {
+  bool fadeOnly = false,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      if (fadeOnly) {
+        return FadeTransition(opacity: curved, child: child);
+      }
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.04, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
@@ -39,134 +74,150 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.onboarding,
       name: 'onboarding',
-      builder: (context, state) => const OnboardingPage(),
+      pageBuilder: (context, state) =>
+          _page(state, const OnboardingPage(), fadeOnly: true),
     ),
     GoRoute(
       path: AppRoutes.login,
       name: 'login',
-      builder: (context, state) => const LoginScreen(),
+      pageBuilder: (context, state) => _page(state, const LoginScreen()),
     ),
     GoRoute(
       path: AppRoutes.signup,
       name: 'signup',
-      builder: (context, state) => const SignupScreen(),
+      pageBuilder: (context, state) => _page(state, const SignupScreen()),
     ),
     GoRoute(
       path: AppRoutes.forgotPassword,
       name: 'forgotPassword',
-      builder: (context, state) => const ForgotPasswordScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ForgotPasswordScreen()),
     ),
     GoRoute(
       path: AppRoutes.verifyAccount,
       name: 'verifyAccount',
-      builder: (context, state) =>
-          VerifyAccountScreen(args: state.extra as VerifyAccountArgs?),
+      pageBuilder: (context, state) => _page(
+          state, VerifyAccountScreen(args: state.extra as VerifyAccountArgs?)),
     ),
     GoRoute(
       path: AppRoutes.emailVerified,
       name: 'emailVerified',
-      builder: (context, state) => const EmailVerifiedScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const EmailVerifiedScreen()),
     ),
     GoRoute(
       path: AppRoutes.home,
       name: 'home',
-      builder: (context, state) => const HomePage(),
+      pageBuilder: (context, state) =>
+          _page(state, const HomePage(), fadeOnly: true),
     ),
     GoRoute(
       path: AppRoutes.nearbyAssistance,
       name: 'nearbyAssistance',
-      builder: (context, state) => const NearbyAssistanceScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const NearbyAssistanceScreen(), fadeOnly: true),
     ),
     GoRoute(
       path: AppRoutes.nearbyAccidents,
       name: 'nearbyAccidents',
-      builder: (context, state) => const NearbyAccidentsScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const NearbyAccidentsScreen(), fadeOnly: true),
     ),
     GoRoute(
       path: AppRoutes.needHelp,
       name: 'needHelp',
-      builder: (context, state) => const NeedHelpScreen(),
+      pageBuilder: (context, state) => _page(state, const NeedHelpScreen()),
     ),
     GoRoute(
       path: AppRoutes.describeIssue,
       name: 'describeIssue',
-      builder: (context, state) => const DescribeIssueScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const DescribeIssueScreen()),
     ),
     GoRoute(
       path: AppRoutes.reviewRequest,
       name: 'reviewRequest',
-      builder: (context, state) => const ReviewRequestScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ReviewRequestScreen()),
     ),
     GoRoute(
       path: AppRoutes.requestSent,
       name: 'requestSent',
-      builder: (context, state) => const RequestSentScreen(),
+      pageBuilder: (context, state) => _page(state, const RequestSentScreen()),
     ),
     GoRoute(
       path: AppRoutes.myAccount,
       name: 'myAccount',
-      builder: (context, state) => const MyAccountScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const MyAccountScreen(), fadeOnly: true),
     ),
     GoRoute(
       path: AppRoutes.changeNumber,
       name: 'changeNumber',
-      builder: (context, state) => const ChangeNumberScreen(),
+      pageBuilder: (context, state) => _page(state, const ChangeNumberScreen()),
     ),
     GoRoute(
       path: AppRoutes.changeNumberForm,
       name: 'changeNumberForm',
-      builder: (context, state) => const ChangeNumberFormScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ChangeNumberFormScreen()),
     ),
     GoRoute(
       path: AppRoutes.changeNumberOtp,
       name: 'changeNumberOtp',
-      builder: (context, state) => const ChangeNumberOtpScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ChangeNumberOtpScreen()),
     ),
     GoRoute(
       path: AppRoutes.changeNumberSuccess,
       name: 'changeNumberSuccess',
-      builder: (context, state) => const ChangeNumberSuccessScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ChangeNumberSuccessScreen()),
     ),
     GoRoute(
       path: AppRoutes.requestHistory,
       name: 'requestHistory',
-      builder: (context, state) => const RequestHistoryScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const RequestHistoryScreen()),
     ),
     GoRoute(
       path: AppRoutes.myRequests,
       name: 'myRequests',
-      builder: (context, state) => const MyRequestsScreen(),
+      pageBuilder: (context, state) => _page(state, const MyRequestsScreen()),
     ),
     GoRoute(
       path: AppRoutes.requestDetails,
       name: 'requestDetails',
-      builder: (context, state) =>
-          RequestDetailsScreen(item: state.extra as RequestHistoryItem),
+      pageBuilder: (context, state) => _page(
+          state, RequestDetailsScreen(item: state.extra as RequestHistoryItem)),
     ),
     GoRoute(
       path: AppRoutes.reportAccident,
       name: 'reportAccident',
-      builder: (context, state) => const ReportAccidentScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ReportAccidentScreen()),
     ),
     GoRoute(
       path: AppRoutes.manageRoads,
       name: 'manageRoads',
-      builder: (context, state) => const ManageRoadsScreen(),
+      pageBuilder: (context, state) => _page(state, const ManageRoadsScreen()),
     ),
     GoRoute(
       path: AppRoutes.describeAccident,
       name: 'describeAccident',
-      builder: (context, state) => const DescribeAccidentScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const DescribeAccidentScreen()),
     ),
     GoRoute(
       path: AppRoutes.reviewAccident,
       name: 'reviewAccident',
-      builder: (context, state) => const ReviewAccidentScreen(),
+      pageBuilder: (context, state) =>
+          _page(state, const ReviewAccidentScreen()),
     ),
     GoRoute(
       path: AppRoutes.accidentSent,
       name: 'accidentSent',
-      builder: (context, state) => const ReportSentScreen(),
+      pageBuilder: (context, state) => _page(state, const ReportSentScreen()),
     ),
   ],
 );

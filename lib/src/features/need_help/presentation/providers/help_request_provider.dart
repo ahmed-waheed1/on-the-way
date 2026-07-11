@@ -47,11 +47,14 @@ class HelpRequestNotifier extends StateNotifier<HelpRequestState> {
   HelpRequestNotifier() : super(const HelpRequestState());
 
   void setHelpType(HelpType type) => state = state.copyWith(helpType: type);
-  void setDescription(String value) => state = state.copyWith(description: value);
+  void setDescription(String value) =>
+      state = state.copyWith(description: value);
   void setLocation(String value, {double? latitude, double? longitude}) =>
-      state = state.copyWith(location: value, latitude: latitude, longitude: longitude);
+      state = state.copyWith(
+          location: value, latitude: latitude, longitude: longitude);
   void setImageCount(int count) => state = state.copyWith(imageCount: count);
-  void setImage(File image) => state = state.copyWith(image: image, imageCount: 1);
+  void setImage(File image) =>
+      state = state.copyWith(image: image, imageCount: 1);
   void reset() => state = const HelpRequestState();
 }
 

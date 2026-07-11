@@ -76,7 +76,9 @@ class _FilterChip extends StatelessWidget {
               fontVariations: AppTypography.regular,
               fontWeight: FontWeight.w400,
               fontSize: 12.sp,
-              color: isActive ? AppColors.chipActiveText : AppColors.chipInactiveText,
+              color: isActive
+                  ? AppColors.chipActiveText
+                  : AppColors.chipInactiveText,
             ),
           ),
         ),

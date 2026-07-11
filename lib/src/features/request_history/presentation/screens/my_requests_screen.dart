@@ -16,7 +16,8 @@ class MyRequestsScreen extends HookWidget {
   Widget build(BuildContext context) {
     final isLoading = useState(true);
     final errorMessage = useState<String?>(null);
-    final items = useState<List<RequestHistoryItem>>(const <RequestHistoryItem>[]);
+    final items =
+        useState<List<RequestHistoryItem>>(const <RequestHistoryItem>[]);
     final openingId = useState<String?>(null);
 
     Future<void> load() async {
@@ -27,9 +28,7 @@ class MyRequestsScreen extends HookWidget {
       result.fold(
         (f) => errorMessage.value = f.message,
         (data) {
-          final list = (data is List) ? data : const <dynamic>[];
-          items.value = list
-              .whereType<Map<String, dynamic>>()
+          items.value = extractJsonList(data)
               .map(RequestHistoryItem.fromHistoryJson)
               .toList();
         },
@@ -54,8 +53,10 @@ class MyRequestsScreen extends HookWidget {
         (data) {
           if (data is! Map) return;
           final detail = item.type == RequestType.accident
-              ? RequestHistoryItem.fromIncidentDetail(data.cast<String, dynamic>())
-              : RequestHistoryItem.fromAssistanceDetail(data.cast<String, dynamic>());
+              ? RequestHistoryItem.fromIncidentDetail(
+                  data.cast<String, dynamic>())
+              : RequestHistoryItem.fromAssistanceDetail(
+                  data.cast<String, dynamic>());
           context.push(AppRoutes.requestDetails, extra: detail);
         },
       );
@@ -66,7 +67,8 @@ class MyRequestsScreen extends HookWidget {
       appBar: const AppTopBar(title: 'My Requests'),
       body: SafeArea(
         child: switch ((isLoading.value, errorMessage.value)) {
-          (true, _) => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          (true, _) => const Center(
+              child: CircularProgressIndicator(color: AppColors.primary)),
           (false, final String msg) => _ErrorState(message: msg, onRetry: load),
           _ => items.value.isEmpty
               ? RefreshIndicator(
@@ -80,6 +82,7 @@ class MyRequestsScreen extends HookWidget {
                   onRefresh: load,
                   color: AppColors.primary,
                   child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(10.w, 16.h, 10.w, 24.h),
                     itemCount: items.value.length,
                     separatorBuilder: (_, __) => SizedBox(height: 24.h),
@@ -108,7 +111,8 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.inbox_outlined, size: 44.r, color: AppColors.distanceText),
+            Icon(Icons.inbox_outlined,
+                size: 44.r, color: AppColors.distanceText),
             SizedBox(height: 12.h),
             Text(
               "You haven't made any requests yet.",
@@ -144,7 +148,8 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40.r, color: AppColors.distanceText),
+            Icon(Icons.error_outline,
+                size: 40.r, color: AppColors.distanceText),
             SizedBox(height: 12.h),
             Text(
               message,

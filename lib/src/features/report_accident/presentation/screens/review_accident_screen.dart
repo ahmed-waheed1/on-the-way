@@ -15,8 +15,18 @@ class ReviewAccidentScreen extends HookConsumerWidget {
   const ReviewAccidentScreen({super.key});
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String _formatDateTime(DateTime d) {
@@ -150,7 +160,9 @@ class ReviewAccidentScreen extends HookConsumerWidget {
                           SizedBox(height: 28.h),
                           _DetailRow(
                             label: 'Description',
-                            value: draft.description.isEmpty ? '—' : draft.description,
+                            value: draft.description.isEmpty
+                                ? '—'
+                                : draft.description,
                           ),
                         ],
                       ),
@@ -218,7 +230,9 @@ class ReviewAccidentScreen extends HookConsumerWidget {
                                 ),
                               ),
                               Text(
-                                draft.phoneNumber.isEmpty ? '—' : draft.phoneNumber,
+                                draft.phoneNumber.isEmpty
+                                    ? '—'
+                                    : draft.phoneNumber,
                                 style: TextStyle(
                                   fontFamily: AppTypography.robotoFlex,
                                   fontVariations: AppTypography.regular,
@@ -416,25 +430,32 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
+    return Container(
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),
@@ -451,25 +472,32 @@ class _OutlineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary, width: 2),
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: AppColors.primary,
-            height: 20 / 16,
+    return Container(
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14.r),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: AppColors.primary,
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),
