@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../routing/app_routes.dart';
 import '../../../../services/location_service.dart';
+import '../../../../shared/helpers/show_toast.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../providers/help_request_provider.dart';
@@ -46,9 +47,7 @@ class DescribeIssueScreen extends HookConsumerWidget {
       isFetchingLocation.value = false;
       if (!context.mounted) return;
       result.fold(
-        (failure) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(failure.message)),
-        ),
+        (failure) => showToast(context, message: failure.message, status: 'error'),
         (loc) {
           latitude.value = loc.position.latitude;
           longitude.value = loc.position.longitude;

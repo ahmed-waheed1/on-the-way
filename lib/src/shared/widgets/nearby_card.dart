@@ -76,9 +76,10 @@ class NearbyCard extends StatelessWidget {
               SizedBox(width: 4.w),
               Expanded(
                 child: _CardButton(
-                  label: isActionBusy ? '…' : actionLabel,
+                  label: actionLabel,
                   bg: AppColors.offerHelpBg,
                   textColor: AppColors.offerHelpText,
+                  isBusy: isActionBusy,
                   onTap: isActionBusy ? () {} : onOfferHelp,
                 ),
               ),
@@ -200,12 +201,14 @@ class _CardButton extends StatelessWidget {
     required this.bg,
     required this.textColor,
     required this.onTap,
+    this.isBusy = false,
   });
 
   final String label;
   final Color bg;
   final Color textColor;
   final VoidCallback onTap;
+  final bool isBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +221,13 @@ class _CardButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Center(
-          child: Text(
+          child: isBusy
+              ? SizedBox(
+                  width: 16.r,
+                  height: 16.r,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: textColor),
+                )
+              : Text(
             label,
             style: TextStyle(
               fontFamily: AppTypography.robotoFlex,

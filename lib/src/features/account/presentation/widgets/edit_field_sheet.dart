@@ -102,7 +102,8 @@ class _EditFieldSheet extends HookWidget {
                 AppTextField(
                   controller: controller,
                   hint: hint,
-                  keyboardType: keyboardType,
+                  // TextInputAction.newline requires a multiline keyboard type.
+                  keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
                   maxLines: maxLines,
                   obscureText: obscure,
                   autofocus: true,
