@@ -26,9 +26,12 @@ class IncidentService {
       'type': type.toString(),
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
-      if (locationName != null && locationName.isNotEmpty) 'locationName': locationName,
-      if (description != null && description.isNotEmpty) 'description': description,
-      if (phoneNumber != null && phoneNumber.isNotEmpty) 'phoneNumber': phoneNumber,
+      if (locationName != null && locationName.isNotEmpty)
+        'locationName': locationName,
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (phoneNumber != null && phoneNumber.isNotEmpty)
+        'phoneNumber': phoneNumber,
       if (image != null)
         'image': await MultipartFile.fromFile(
           image.path,
@@ -39,10 +42,12 @@ class IncidentService {
   }
 
   /// GET /api/incidents/{id}.
-  FutureEither<dynamic> getById(String id) => _api.get<dynamic>(ApiEndpoints.incidentById(id));
+  FutureEither<dynamic> getById(String id) =>
+      _api.get<dynamic>(ApiEndpoints.incidentById(id));
 
   /// POST /api/incidents/vote.
-  FutureEither<void> vote({required String incidentId, required bool isUpvote}) {
+  FutureEither<void> vote(
+      {required String incidentId, required bool isUpvote}) {
     return _api.post<void>(ApiEndpoints.voteIncident, data: {
       'incidentId': incidentId,
       'isUpvote': isUpvote,

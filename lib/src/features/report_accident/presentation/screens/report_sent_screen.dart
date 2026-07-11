@@ -111,25 +111,32 @@ class ReportSentScreen extends ConsumerWidget {
             // ── Back to home ───────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.fromLTRB(27.w, 0, 27.w, 28.h),
-              child: GestureDetector(
-                onTap: goHome,
-                child: Container(
-                  width: double.infinity,
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
+              child: Container(
+                width: double.infinity,
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16.r),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: goHome,
                     borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Back to Home',
-                    style: TextStyle(
-                      fontFamily: AppTypography.robotoFlex,
-                      fontVariations: AppTypography.black,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16.sp,
-                      color: const Color(0xFFEEEEEE),
-                      height: 20 / 16,
+                    child: Center(
+                      child: Text(
+                        'Back to Home',
+                        style: TextStyle(
+                          fontFamily: AppTypography.robotoFlex,
+                          fontVariations: AppTypography.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16.sp,
+                          color: const Color(0xFFEEEEEE),
+                          height: 20 / 16,
+                        ),
+                      ),
                     ),
                   ),
                 ),

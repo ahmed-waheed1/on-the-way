@@ -26,7 +26,25 @@ class NeedHelpScreen extends HookConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 28.h),
+              SizedBox(height: 20.h),
+
+              // ── Back arrow ───────────────────────────────────────────────────
+              GestureDetector(
+                onTap: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(AppRoutes.home);
+                  }
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Icon(
+                  Icons.arrow_back,
+                  size: 22.r,
+                  color: AppColors.titleText,
+                ),
+              ),
+              SizedBox(height: 8.h),
 
               // ── Brand ────────────────────────────────────────────────────────
               Center(
@@ -149,52 +167,60 @@ class _HelpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected ? _kCardSelectedBg : Colors.white,
-          border: Border.all(color: AppColors.primary, width: 2),
-          borderRadius: BorderRadius.circular(8.r),
-        ),
-        padding: EdgeInsets.all(12.r),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SvgPicture.asset(
-              type.iconPath,
-              width: 24.r,
-              height: 24.r,
-              colorFilter: ColorFilter.mode(
-                isSelected ? AppColors.primary : _kIconUnselectedColor,
-                BlendMode.srcIn,
-              ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isSelected ? _kCardSelectedBg : Colors.white,
+        border: Border.all(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(6.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6.r),
+          child: Padding(
+            padding: EdgeInsets.all(12.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SvgPicture.asset(
+                  type.iconPath,
+                  width: 24.r,
+                  height: 24.r,
+                  colorFilter: ColorFilter.mode(
+                    isSelected ? AppColors.primary : _kIconUnselectedColor,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  type.title,
+                  style: TextStyle(
+                    fontFamily: AppTypography.robotoFlex,
+                    fontVariations: AppTypography.semiBold,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    color: AppColors.titleText,
+                    height: 20 / 16,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  type.subtitle,
+                  style: TextStyle(
+                    fontFamily: AppTypography.robotoFlex,
+                    fontVariations: AppTypography.semiBold,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.sp,
+                    color: _kSubtitleColor,
+                  ),
+                ),
+              ],
             ),
-            const Spacer(),
-            Text(
-              type.title,
-              style: TextStyle(
-                fontFamily: AppTypography.robotoFlex,
-                fontVariations: AppTypography.semiBold,
-                fontWeight: FontWeight.w600,
-                fontSize: 16.sp,
-                color: AppColors.titleText,
-                height: 20 / 16,
-              ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              type.subtitle,
-              style: TextStyle(
-                fontFamily: AppTypography.robotoFlex,
-                fontVariations: AppTypography.semiBold,
-                fontWeight: FontWeight.w600,
-                fontSize: 12.sp,
-                color: _kSubtitleColor,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -211,27 +237,34 @@ class _NextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: enabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.4),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: enabled
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Next',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              'Next',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),

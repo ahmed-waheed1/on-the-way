@@ -46,7 +46,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  FutureEither<AppUser> login({required String email, required String password}) async {
+  FutureEither<AppUser> login(
+      {required String email, required String password}) async {
     final result = await _authService.login(email: email, password: password);
     return result.flatMap((userData) {
       if (userData == null) {
@@ -61,7 +62,8 @@ class AuthRepositoryImpl implements AuthRepository {
     final result = await _authService.googleLogin(idToken: idToken);
     return result.flatMap((userData) {
       if (userData == null) {
-        return left(const ServerFailure('Google login failed: no user returned.'));
+        return left(
+            const ServerFailure('Google login failed: no user returned.'));
       }
       return right(_mapToUser(userData));
     });
@@ -95,7 +97,8 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   FutureEither<AppUser?> checkAuthState() async {
     final result = await _authService.getCurrentUser();
-    return result.map((userData) => userData == null ? null : _mapToUser(userData));
+    return result
+        .map((userData) => userData == null ? null : _mapToUser(userData));
   }
 
   @override

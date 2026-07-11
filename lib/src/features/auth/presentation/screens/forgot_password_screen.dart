@@ -178,38 +178,46 @@ class _SendCodeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: onTap == null
-              ? AppColors.primary.withValues(alpha: 0.6)
-              : AppColors.primary,
-          borderRadius: BorderRadius.circular(12.r),
+    final radius = BorderRadius.circular(12.r);
+    return Container(
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: onTap == null
+            ? AppColors.primary.withValues(alpha: 0.6)
+            : AppColors.primary,
+        borderRadius: radius,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: 22.r,
+                    height: 22.r,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Send Code',
+                    style: TextStyle(
+                      fontFamily: AppTypography.robotoFlex,
+                      fontVariations: AppTypography.black,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                      height: 20 / 16,
+                    ),
+                  ),
+          ),
         ),
-        alignment: Alignment.center,
-        child: isLoading
-            ? SizedBox(
-                width: 22.r,
-                height: 22.r,
-                child: const CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : Text(
-                'Send Code',
-                style: TextStyle(
-                  fontFamily: AppTypography.robotoFlex,
-                  fontVariations: AppTypography.black,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16.sp,
-                  color: Colors.white,
-                  height: 20 / 16,
-                ),
-              ),
       ),
     );
   }

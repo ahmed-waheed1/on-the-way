@@ -65,7 +65,8 @@ class ApiClient {
       return left(_mapDioError(e));
     } catch (e, s) {
       AppLogger.error('Unexpected API error', [e, s]);
-      return left(ServerFailure('Something went wrong. Please try again.', error: e));
+      return left(
+          ServerFailure('Something went wrong. Please try again.', error: e));
     }
   }
 
@@ -87,7 +88,9 @@ class ApiClient {
   String? _extractError(Map<dynamic, dynamic> body) {
     final err = body['error'];
     if (err is String && err.isNotEmpty) return err;
-    if (err is Map && err['message'] is String && (err['message'] as String).isNotEmpty) {
+    if (err is Map &&
+        err['message'] is String &&
+        (err['message'] as String).isNotEmpty) {
       return err['message'] as String;
     }
     return null;
@@ -111,7 +114,8 @@ class ApiClient {
           ? 'Your session has expired. Please sign in again.'
           : 'Something went wrong. Please try again.',
     };
-    AppLogger.error('API error [${e.response?.statusCode}] ${e.requestOptions.path}', [e]);
+    AppLogger.error(
+        'API error [${e.response?.statusCode}] ${e.requestOptions.path}', [e]);
     return ServerFailure(message, error: e);
   }
 }

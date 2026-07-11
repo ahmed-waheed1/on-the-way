@@ -12,7 +12,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 /// Loading flag for auth actions.
-final authControllerProvider = StateNotifierProvider<AuthController, bool>((ref) {
+final authControllerProvider =
+    StateNotifierProvider<AuthController, bool>((ref) {
   return AuthController(repository: ref.read(authRepositoryProvider));
 });
 
@@ -33,7 +34,8 @@ class AuthController extends StateNotifier<bool> {
     final result = await _repository.login(email: email, password: password);
     state = false;
     result.fold(
-      (failure) => showToast(context, message: failure.message, status: 'error'),
+      (failure) =>
+          showToast(context, message: failure.message, status: 'error'),
       (_) {
         if (context.mounted) context.go(AppRoutes.home);
       },
@@ -57,13 +59,16 @@ class AuthController extends StateNotifier<bool> {
     );
     state = false;
     result.fold(
-      (failure) => showToast(context, message: failure.message, status: 'error'),
+      (failure) =>
+          showToast(context, message: failure.message, status: 'error'),
       (_) {
-        showToast(context, message: 'Verification code sent to your email', status: 'success');
+        showToast(context,
+            message: 'Verification code sent to your email', status: 'success');
         if (context.mounted) {
           context.push(
             AppRoutes.verifyAccount,
-            extra: VerifyAccountArgs(email: email, purpose: VerifyPurpose.verifyEmail),
+            extra: VerifyAccountArgs(
+                email: email, purpose: VerifyPurpose.verifyEmail),
           );
         }
       },
@@ -80,7 +85,8 @@ class AuthController extends StateNotifier<bool> {
     final result = await _repository.verifyEmail(email: email, otp: otp);
     state = false;
     result.fold(
-      (failure) => showToast(context, message: failure.message, status: 'error'),
+      (failure) =>
+          showToast(context, message: failure.message, status: 'error'),
       (_) {
         if (context.mounted) context.go(AppRoutes.emailVerified);
       },
@@ -96,13 +102,17 @@ class AuthController extends StateNotifier<bool> {
     final result = await _repository.forgetPassword(email: email);
     state = false;
     result.fold(
-      (failure) => showToast(context, message: failure.message, status: 'error'),
+      (failure) =>
+          showToast(context, message: failure.message, status: 'error'),
       (_) {
-        showToast(context, message: 'If the email exists, a reset code was sent', status: 'success');
+        showToast(context,
+            message: 'If the email exists, a reset code was sent',
+            status: 'success');
         if (context.mounted) {
           context.push(
             AppRoutes.verifyAccount,
-            extra: VerifyAccountArgs(email: email, purpose: VerifyPurpose.resetPassword),
+            extra: VerifyAccountArgs(
+                email: email, purpose: VerifyPurpose.resetPassword),
           );
         }
       },
@@ -126,9 +136,11 @@ class AuthController extends StateNotifier<bool> {
     );
     state = false;
     result.fold(
-      (failure) => showToast(context, message: failure.message, status: 'error'),
+      (failure) =>
+          showToast(context, message: failure.message, status: 'error'),
       (_) {
-        showToast(context, message: 'Password reset successfully', status: 'success');
+        showToast(context,
+            message: 'Password reset successfully', status: 'success');
         if (context.mounted) context.go(AppRoutes.login);
       },
     );
@@ -143,7 +155,8 @@ class AuthController extends StateNotifier<bool> {
     final result = await _repository.googleLogin(idToken: idToken);
     state = false;
     result.fold(
-      (failure) => showToast(context, message: failure.message, status: 'error'),
+      (failure) =>
+          showToast(context, message: failure.message, status: 'error'),
       (_) {
         if (context.mounted) context.go(AppRoutes.home);
       },

@@ -14,7 +14,8 @@ final authStateStreamProvider = StreamProvider<AppUser?>((ref) {
 });
 
 /// Provides the current session state
-final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>((ref) {
+final sessionProvider =
+    StateNotifierProvider<SessionNotifier, SessionState>((ref) {
   final repo = ref.read(authRepositoryProvider);
   return SessionNotifier(repository: repo);
 });
@@ -28,7 +29,8 @@ class SessionState {
 
   const SessionState({this.status = SessionStatus.unknown, this.user});
 
-  SessionState copyWith({SessionStatus? status, AppUser? user, bool clearUser = false}) {
+  SessionState copyWith(
+      {SessionStatus? status, AppUser? user, bool clearUser = false}) {
     return SessionState(
       status: status ?? this.status,
       user: clearUser ? null : (user ?? this.user),
@@ -109,7 +111,8 @@ class SessionNotifier extends StateNotifier<SessionState> {
       (url) {
         final updated = state.user?.copyWith(photoUrl: url);
         if (updated != null) {
-          state = state.copyWith(status: SessionStatus.authenticated, user: updated);
+          state = state.copyWith(
+              status: SessionStatus.authenticated, user: updated);
         }
         return true;
       },
@@ -122,4 +125,3 @@ class SessionNotifier extends StateNotifier<SessionState> {
     super.dispose();
   }
 }
-

@@ -6,9 +6,9 @@ import 'package:on_the_way/src/features/auth/presentation/providers/session_prov
 const _kSubtitleGray = Color(0xFFB1B6B6);
 const _kCardShadow = [
   BoxShadow(
-    color: Color(0x40000000),
-    blurRadius: 4,
-    offset: Offset(0, 4),
+    color: Color(0x26000000),
+    blurRadius: 10,
+    offset: Offset(0, 3),
   ),
 ];
 
@@ -17,13 +17,15 @@ class HomePage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(sessionProvider); // keep session live for future user-aware widgets
+    ref.watch(
+        sessionProvider); // keep session live for future user-aware widgets
 
     return Scaffold(
       backgroundColor: Colors.white,
-      floatingActionButton: _EditFab(onTap: () {}),
+      floatingActionButton:
+          _EditFab(onTap: () => context.push(AppRoutes.manageRoads)),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: const _BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -45,11 +47,16 @@ class HomePage extends HookConsumerWidget {
                     letterSpacing: -0.5,
                     height: 28 / 32,
                   ),
-                ),
+                ).animate().fadeIn(duration: const Duration(milliseconds: 350)),
                 SizedBox(height: 24.h),
 
                 // ── Map card ──────────────────────────────────────────────────
-                const _MapCard(),
+                const _MapCard()
+                    .animate()
+                    .fadeIn(
+                        duration: const Duration(milliseconds: 350),
+                        delay: const Duration(milliseconds: 80))
+                    .slideY(begin: 0.04, curve: Curves.easeOutCubic),
                 SizedBox(height: 32.h),
 
                 // ── Action buttons ────────────────────────────────────────────
@@ -77,7 +84,12 @@ class HomePage extends HookConsumerWidget {
                         isPrimary: false,
                         onTap: () => context.push(AppRoutes.requestHistory),
                       ),
-                    ],
+                    ]
+                        .animate(interval: const Duration(milliseconds: 70))
+                        .fadeIn(
+                            duration: const Duration(milliseconds: 300),
+                            delay: const Duration(milliseconds: 150))
+                        .slideY(begin: 0.06, curve: Curves.easeOutCubic),
                   ),
                 ),
                 SizedBox(height: 100.h),
@@ -198,33 +210,40 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isPrimary ? const Color(0xFFEEEEEE) : AppColors.titleText;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: isPrimary ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: isPrimary ? null : _kCardShadow,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 24.r, color: color),
-            SizedBox(width: 16.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: AppTypography.robotoFlex,
-                fontVariations: AppTypography.bold,
-                fontWeight: FontWeight.w700,
-                fontSize: 16.sp,
-                color: color,
-                height: 20 / 16,
+    final radius = BorderRadius.circular(12.r);
+    return Container(
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: isPrimary ? AppColors.primary : Colors.white,
+        borderRadius: radius,
+        boxShadow: isPrimary ? null : _kCardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 24.r, color: color),
+              SizedBox(width: 16.w),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppTypography.robotoFlex,
+                  fontVariations: AppTypography.bold,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16.sp,
+                  color: color,
+                  height: 20 / 16,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -239,103 +258,29 @@ class _EditFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 54.r,
-        height: 54.r,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(Icons.edit_outlined, size: 24.r, color: Colors.white),
-      ),
-    );
-  }
-}
-
-// ── Bottom navigation bar ─────────────────────────────────────────────────────
-
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar({required this.currentIndex});
-
-  final int currentIndex;
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      height: 80.h,
-      color: Colors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _NavItem(
-            icon: Icons.home_outlined,
-            label: 'Home',
-            isActive: currentIndex == 0,
-            onTap: () {},
-          ),
-          _NavItem(
-            icon: Icons.report_problem_outlined,
-            label: 'Accident',
-            isActive: currentIndex == 1,
-            onTap: () => context.push(AppRoutes.nearbyAccidents),
-          ),
-          _NavItem(
-            icon: Icons.handyman_outlined,
-            label: 'Assistance',
-            isActive: currentIndex == 2,
-            onTap: () => context.push(AppRoutes.nearbyAssistance),
-          ),
-          _NavItem(
-            icon: Icons.person_outline,
-            label: 'Profile',
-            isActive: currentIndex == 3,
-            onTap: () => context.push(AppRoutes.myAccount),
+      width: 54.r,
+      height: 54.r,
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive ? AppColors.primary : _kSubtitleGray;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 32.r, color: color),
-          SizedBox(height: 2.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppTypography.robotoFlex,
-              fontVariations: AppTypography.regular,
-              fontWeight: FontWeight.w400,
-              fontSize: 14.sp,
-              color: color,
-              height: 20 / 14,
-            ),
-          ),
-        ],
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Icon(Icons.edit_outlined, size: 24.r, color: Colors.white),
+        ),
       ),
     );
   }

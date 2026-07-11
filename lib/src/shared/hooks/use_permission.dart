@@ -3,7 +3,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../services/permission_service.dart';
 
 /// A hook to manage permission lifecycle and status with loading state.
-(PermissionStatus, bool, Future<void> Function()) usePermission(Permission permission) {
+(PermissionStatus, bool, Future<void> Function()) usePermission(
+    Permission permission) {
   final status = useState<PermissionStatus>(PermissionStatus.denied);
   final isLoading = useState(false);
 

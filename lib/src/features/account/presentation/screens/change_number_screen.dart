@@ -96,25 +96,32 @@ class ChangeNumberScreen extends HookConsumerWidget {
             // ── Change number ─────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.fromLTRB(27.w, 0, 27.w, 24.h),
-              child: GestureDetector(
-                onTap: changeNumber,
-                child: Container(
-                  width: double.infinity,
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
+              child: Container(
+                width: double.infinity,
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(12.r),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: changeNumber,
                     borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Change Number',
-                    style: TextStyle(
-                      fontFamily: AppTypography.robotoFlex,
-                      fontVariations: AppTypography.black,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16.sp,
-                      color: Colors.white,
-                      height: 20 / 16,
+                    child: Center(
+                      child: Text(
+                        'Change Number',
+                        style: TextStyle(
+                          fontFamily: AppTypography.robotoFlex,
+                          fontVariations: AppTypography.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                          height: 20 / 16,
+                        ),
+                      ),
                     ),
                   ),
                 ),

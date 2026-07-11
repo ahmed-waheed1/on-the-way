@@ -83,19 +83,32 @@ class _BottomNav extends StatelessWidget {
                   spacing: 4.r,
                 ),
               ),
-              GestureDetector(
-                onTap: onNext,
-                child: Container(
-                  width: 54.r,
-                  height: 54.r,
-                  decoration: const BoxDecoration(
-                    color: _kPrimaryBlue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white,
-                    size: 22,
+              Container(
+                width: 54.r,
+                height: 54.r,
+                decoration: const BoxDecoration(
+                  color: _kPrimaryBlue,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x33025D8C),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CircleBorder(),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: onNext,
+                    customBorder: const CircleBorder(),
+                    child: const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
                 ),
               ),
@@ -138,7 +151,8 @@ class _OnboardingPage1 extends StatelessWidget {
               SizedBox(width: 8.w),
               Text(
                 'On The Way',
-                style: AppTextStyles.onboardingHero.copyWith(color: _kPrimaryBlue),
+                style:
+                    AppTextStyles.onboardingHero.copyWith(color: _kPrimaryBlue),
               ),
             ],
           ),
@@ -146,7 +160,8 @@ class _OnboardingPage1 extends StatelessWidget {
           Text(
             'Start your journey with real-time\nhazard detection and smart routing',
             textAlign: TextAlign.center,
-            style: AppTextStyles.onboardingSubtitle.copyWith(color: _kSubtitleGray),
+            style: AppTextStyles.onboardingSubtitle
+                .copyWith(color: _kSubtitleGray),
           ),
           const Spacer(),
           SizedBox(height: 90.h),

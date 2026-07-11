@@ -8,7 +8,7 @@ import '../../imports/imports.dart';
     try {
       hasCopied.value = true;
       await Clipboard.setData(ClipboardData(text: text));
-      
+
       showGlobalToast(
         message: 'Copied successfully',
         status: 'success',
@@ -21,7 +21,7 @@ import '../../imports/imports.dart';
     } catch (e) {
       AppLogger.error('Error copying to clipboard: $e');
       hasCopied.value = false;
-      
+
       showGlobalToast(
         message: 'Failed to copy',
         status: 'error',

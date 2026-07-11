@@ -26,9 +26,11 @@ class AssistanceService {
       'type': type.toString(),
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
-      if (description != null && description.isNotEmpty) 'description': description,
+      if (description != null && description.isNotEmpty)
+        'description': description,
       if (address != null && address.isNotEmpty) 'address': address,
-      if (contactNumber != null && contactNumber.isNotEmpty) 'contactNumber': contactNumber,
+      if (contactNumber != null && contactNumber.isNotEmpty)
+        'contactNumber': contactNumber,
       if (image != null)
         'image': await MultipartFile.fromFile(
           image.path,

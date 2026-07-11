@@ -79,9 +79,21 @@ enum RequestStatus {
   static RequestStatus fromApi(String? status) {
     final s = (status ?? '').toLowerCase().replaceAll(RegExp(r'[\s_]'), '');
     return switch (s) {
-      'inprogress' || 'accepted' || 'active' || 'ongoing' => RequestStatus.inProgress,
-      'completed' || 'resolved' || 'done' || 'closed' => RequestStatus.completed,
-      'cancelled' || 'canceled' || 'rejected' || 'declined' => RequestStatus.cancelled,
+      'inprogress' ||
+      'accepted' ||
+      'active' ||
+      'ongoing' =>
+        RequestStatus.inProgress,
+      'completed' ||
+      'resolved' ||
+      'done' ||
+      'closed' =>
+        RequestStatus.completed,
+      'cancelled' ||
+      'canceled' ||
+      'rejected' ||
+      'declined' =>
+        RequestStatus.cancelled,
       _ => RequestStatus.pending, // pending / open / new / submitted
     };
   }
@@ -133,7 +145,8 @@ class RequestHistoryItem extends Equatable {
     return RequestHistoryItem(
       id: json['id']?.toString() ?? '',
       type: RequestType.fromCategory(json['category']?.toString()),
-      date: DateTime.tryParse(json['date']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      date: DateTime.tryParse(json['date']?.toString() ?? '')?.toLocal() ??
+          DateTime.now(),
       location: json['location']?.toString() ?? '',
       status: RequestStatus.fromApi(json['status']?.toString()),
       title: typeName,
@@ -147,7 +160,8 @@ class RequestHistoryItem extends Equatable {
     return RequestHistoryItem(
       id: json['id']?.toString() ?? '',
       type: RequestType.accident,
-      date: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      date: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ??
+          DateTime.now(),
       location: json['locationName']?.toString() ?? '',
       status: RequestStatus.fromApi(json['status']?.toString()),
       title: typeName,
@@ -164,7 +178,8 @@ class RequestHistoryItem extends Equatable {
     return RequestHistoryItem(
       id: json['id']?.toString() ?? '',
       type: RequestType.assistance,
-      date: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      date: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ??
+          DateTime.now(),
       location: json['address']?.toString() ?? '',
       status: RequestStatus.fromApi(json['status']?.toString()),
       title: typeName,
@@ -176,6 +191,16 @@ class RequestHistoryItem extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, type, date, location, status, title, incidentType, description, contactNumber, imageUrl];
+  List<Object?> get props => [
+        id,
+        type,
+        date,
+        location,
+        status,
+        title,
+        incidentType,
+        description,
+        contactNumber,
+        imageUrl
+      ];
 }

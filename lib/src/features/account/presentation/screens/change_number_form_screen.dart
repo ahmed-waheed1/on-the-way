@@ -121,7 +121,9 @@ class ChangeNumberFormScreen extends HookConsumerWidget {
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       validator: (v) {
-                        if (AppUtils.isBlank(v)) return 'Phone number is required';
+                        if (AppUtils.isBlank(v)) {
+                          return 'Phone number is required';
+                        }
                         if (v!.trim().length < 7) return 'Enter a valid number';
                         return null;
                       },
@@ -154,7 +156,8 @@ class ChangeNumberFormScreen extends HookConsumerWidget {
                             color: Colors.white,
                           ),
                         )
-                      : Icon(Icons.arrow_forward, size: 24.r, color: Colors.white),
+                      : Icon(Icons.arrow_forward,
+                          size: 24.r, color: Colors.white),
                 ),
               ),
             ),

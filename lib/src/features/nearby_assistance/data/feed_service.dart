@@ -48,13 +48,17 @@ class FeedService {
   }
 
   /// POST /api/feed/assistance/{id}/offer-help
-  FutureEither<void> offerHelp({required String assistanceId, required String message}) {
-    return _api.post<void>(ApiEndpoints.offerHelp(assistanceId), data: {'message': message});
+  FutureEither<void> offerHelp(
+      {required String assistanceId, required String message}) {
+    return _api.post<void>(ApiEndpoints.offerHelp(assistanceId),
+        data: {'message': message});
   }
 
   /// POST /api/feed/offers/{offerId}/respond
-  FutureEither<void> respondToOffer({required String offerId, required bool isAccepted}) {
-    return _api.post<void>(ApiEndpoints.respondToOffer(offerId), data: {'isAccepted': isAccepted});
+  FutureEither<void> respondToOffer(
+      {required String offerId, required bool isAccepted}) {
+    return _api.post<void>(ApiEndpoints.respondToOffer(offerId),
+        data: {'isAccepted': isAccepted});
   }
 
   /// POST /api/feed/assistance/{id}/complete

@@ -61,12 +61,14 @@ class MyAccountScreen extends HookConsumerWidget {
           pendingAvatar.value = file;
           isUploadingAvatar.value = true;
 
-          final ok = await ref.read(sessionProvider.notifier).uploadAvatar(file);
+          final ok =
+              await ref.read(sessionProvider.notifier).uploadAvatar(file);
 
           isUploadingAvatar.value = false;
           pendingAvatar.value = null;
           if (ok && context.mounted) {
-            showToast(context, message: 'Profile photo updated', status: 'success');
+            showToast(context,
+                message: 'Profile photo updated', status: 'success');
           }
         },
       );
@@ -128,7 +130,9 @@ class MyAccountScreen extends HookConsumerWidget {
         hint: 'e.g. ~johndoe',
       );
       if (result == null || result == current) return;
-      final ok = await ref.read(sessionProvider.notifier).updateProfile(username: result);
+      final ok = await ref
+          .read(sessionProvider.notifier)
+          .updateProfile(username: result);
       if (ok && context.mounted) {
         showToast(context, message: 'Username updated', status: 'success');
       }
@@ -144,7 +148,8 @@ class MyAccountScreen extends HookConsumerWidget {
         maxLines: 3,
       );
       if (result == null || result == current) return;
-      final ok = await ref.read(sessionProvider.notifier).updateProfile(bio: result);
+      final ok =
+          await ref.read(sessionProvider.notifier).updateProfile(bio: result);
       if (ok && context.mounted) {
         showToast(context, message: 'Bio updated', status: 'success');
       }
@@ -152,19 +157,22 @@ class MyAccountScreen extends HookConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 3),
       appBar: AppTopBar(
         title: 'My Account',
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r)),
             onSelected: (value) {
               if (value == 'manage_roads') context.push(AppRoutes.manageRoads);
               if (value == 'my_requests') context.push(AppRoutes.myRequests);
             },
             itemBuilder: (_) => [
-              _menuItem('my_requests', Icons.receipt_long_outlined, 'My Requests'),
+              _menuItem(
+                  'my_requests', Icons.receipt_long_outlined, 'My Requests'),
               _menuItem('manage_roads', Icons.alt_route, 'Manage Roads'),
             ],
           ),
@@ -364,7 +372,8 @@ class _ProfileAvatar extends StatelessWidget {
                 border: Border.all(color: Colors.white, width: 2),
               ),
               padding: EdgeInsets.all(5.r),
-              child: Icon(Icons.camera_alt_outlined, size: 14.r, color: Colors.white),
+              child: Icon(Icons.camera_alt_outlined,
+                  size: 14.r, color: Colors.white),
             ),
           ),
         ],
@@ -475,7 +484,9 @@ class _EditableProfileRow extends StatelessWidget {
                     isEmpty ? emptyHint : value,
                     style: TextStyle(
                       fontFamily: AppTypography.robotoFlex,
-                      fontVariations: isEmpty ? AppTypography.regular : AppTypography.semiBold,
+                      fontVariations: isEmpty
+                          ? AppTypography.regular
+                          : AppTypography.semiBold,
                       fontWeight: isEmpty ? FontWeight.w400 : FontWeight.w600,
                       fontSize: 16.sp,
                       color: isEmpty ? _kSubtitleGray : AppColors.titleText,

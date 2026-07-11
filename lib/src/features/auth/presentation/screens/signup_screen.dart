@@ -1,7 +1,6 @@
 import 'package:on_the_way/src/imports/core_imports.dart';
 import 'package:on_the_way/src/imports/packages_imports.dart';
 
-
 import 'package:on_the_way/src/features/auth/presentation/providers/auth_provider.dart';
 
 class SignupScreen extends HookConsumerWidget {
@@ -29,12 +28,12 @@ class SignupScreen extends HookConsumerWidget {
       }
 
       ref.read(authControllerProvider.notifier).register(
-        context: context,
-        fullName: nameController.text.trim(),
-        email: emailController.text.trim(),
-        password: passwordController.text,
-        confirmPassword: confirmPasswordController.text,
-      );
+            context: context,
+            fullName: nameController.text.trim(),
+            email: emailController.text.trim(),
+            password: passwordController.text,
+            confirmPassword: confirmPasswordController.text,
+          );
     }
 
     return Scaffold(
@@ -48,7 +47,8 @@ class SignupScreen extends HookConsumerWidget {
                 SizedBox(height: AppSpacing.xl.h),
                 Text(
                   'auth.create_account'.tr(),
-                  style: tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style:
+                      tt.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 ).animate().fadeIn().slideY(begin: 0.2),
                 SizedBox(height: AppSpacing.sm.h),
                 Text(
@@ -67,7 +67,9 @@ class SignupScreen extends HookConsumerWidget {
                         enabled: !isLoading,
                         label: 'auth.name'.tr(),
                         prefixIcon: const Icon(IconsaxPlusBold.user),
-                        validator: (v) => AppUtils.isBlank(v) ? 'auth.name_required'.tr() : null,
+                        validator: (v) => AppUtils.isBlank(v)
+                            ? 'auth.name_required'.tr()
+                            : null,
                       ),
                       SizedBox(height: AppSpacing.md.h),
                       AppTextField(
@@ -94,10 +96,13 @@ class SignupScreen extends HookConsumerWidget {
                         obscureText: obscurePassword.value,
                         prefixIcon: const Icon(IconsaxPlusBold.lock),
                         suffixIcon: IconButton(
-                          icon: Icon(obscurePassword.value ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => obscurePassword.value = !obscurePassword.value,
+                          icon: Icon(obscurePassword.value
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () =>
+                              obscurePassword.value = !obscurePassword.value,
                         ),
-                         validator: (v) {
+                        validator: (v) {
                           if (AppUtils.isBlank(v)) {
                             return 'auth.password_required'.tr();
                           }
@@ -115,8 +120,11 @@ class SignupScreen extends HookConsumerWidget {
                         obscureText: obscureConfirmPassword.value,
                         prefixIcon: const Icon(IconsaxPlusBold.lock),
                         suffixIcon: IconButton(
-                          icon: Icon(obscureConfirmPassword.value ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => obscureConfirmPassword.value = !obscureConfirmPassword.value,
+                          icon: Icon(obscureConfirmPassword.value
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () => obscureConfirmPassword.value =
+                              !obscureConfirmPassword.value,
                         ),
                         validator: (v) {
                           if (AppUtils.isBlank(v)) {
@@ -150,9 +158,12 @@ class SignupScreen extends HookConsumerWidget {
                           width: 50.w,
                           height: 50.w,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => showToast(context,
+                                message: 'Social sign-in is coming soon',
+                                status: 'info'),
                             style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFEA4335).withValues(alpha: 0.8),
+                              backgroundColor: const Color(0xFFEA4335)
+                                  .withValues(alpha: 0.8),
                               padding: EdgeInsets.symmetric(horizontal: 10.w),
                               shape: const RoundedRectangleBorder(
                                 borderRadius: AppBorders.button,
@@ -165,7 +176,9 @@ class SignupScreen extends HookConsumerWidget {
                           width: 50.w,
                           height: 50.w,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => showToast(context,
+                                message: 'Social sign-in is coming soon',
+                                status: 'info'),
                             style: TextButton.styleFrom(
                               backgroundColor: const Color(0xFF4285F4),
                               padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -180,7 +193,9 @@ class SignupScreen extends HookConsumerWidget {
                           width: 50.w,
                           height: 50.w,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => showToast(context,
+                                message: 'Social sign-in is coming soon',
+                                status: 'info'),
                             style: TextButton.styleFrom(
                               backgroundColor: const Color(0xFF000000),
                               padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -201,7 +216,8 @@ class SignupScreen extends HookConsumerWidget {
                   child: RichText(
                     text: TextSpan(
                       text: 'auth.already_have_account'.tr(),
-                      style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                      style:
+                          tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                       children: [
                         TextSpan(
                           text: 'auth.sign_up'.tr(),

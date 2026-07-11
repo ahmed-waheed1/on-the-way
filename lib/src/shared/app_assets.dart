@@ -24,8 +24,7 @@ class AppAssets {
       '$_imagesPath/accident_illustration.png';
   static const String resetPasswordIllustration =
       '$_imagesPath/reset_password.png';
-  static const String manageRoadsIllustration =
-      '$_imagesPath/manage_roads.png';
+  static const String manageRoadsIllustration = '$_imagesPath/manage_roads.png';
   static const String changeNumberIllustration =
       '$_imagesPath/change_number.png';
   static const String changeNumberFormIllustration =

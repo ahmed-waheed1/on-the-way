@@ -27,7 +27,8 @@ class RequestHistoryScreen extends HookWidget {
 
     final isLoading = useState(true);
     final errorMessage = useState<String?>(null);
-    final items = useState<List<RequestHistoryItem>>(const <RequestHistoryItem>[]);
+    final items =
+        useState<List<RequestHistoryItem>>(const <RequestHistoryItem>[]);
     final openingId = useState<String?>(null);
 
     Future<void> load() async {
@@ -38,9 +39,7 @@ class RequestHistoryScreen extends HookWidget {
       result.fold(
         (f) => errorMessage.value = f.message,
         (data) {
-          final list = (data is List) ? data : const <dynamic>[];
-          items.value = list
-              .whereType<Map<String, dynamic>>()
+          items.value = extractJsonList(data)
               .map(RequestHistoryItem.fromHistoryJson)
               .toList();
         },
@@ -65,8 +64,10 @@ class RequestHistoryScreen extends HookWidget {
         (data) {
           if (data is! Map) return;
           final detail = item.type == RequestType.accident
-              ? RequestHistoryItem.fromIncidentDetail(data.cast<String, dynamic>())
-              : RequestHistoryItem.fromAssistanceDetail(data.cast<String, dynamic>());
+              ? RequestHistoryItem.fromIncidentDetail(
+                  data.cast<String, dynamic>())
+              : RequestHistoryItem.fromAssistanceDetail(
+                  data.cast<String, dynamic>());
           context.push(AppRoutes.requestDetails, extra: detail);
         },
       );
@@ -145,21 +146,26 @@ class RequestHistoryScreen extends HookWidget {
             // ── List ──────────────────────────────────────────────────────────
             Expanded(
               child: switch ((isLoading.value, errorMessage.value)) {
-                (true, _) => Center(
+                (true, _) => const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
                   ),
-                (false, final String msg) => _ErrorState(message: msg, onRetry: load),
+                (false, final String msg) =>
+                  _ErrorState(message: msg, onRetry: load),
                 _ => filtered.isEmpty
                     ? RefreshIndicator(
                         onRefresh: load,
                         child: ListView(
-                          children: [SizedBox(height: 120.h), const NearbyNoMatchState()],
+                          children: [
+                            SizedBox(height: 120.h),
+                            const NearbyNoMatchState()
+                          ],
                         ),
                       )
                     : RefreshIndicator(
                         onRefresh: load,
                         color: AppColors.primary,
                         child: ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: EdgeInsets.fromLTRB(10.w, 0, 10.w, 16.h),
                           itemCount: filtered.length,
                           separatorBuilder: (_, __) => SizedBox(height: 24.h),
@@ -206,7 +212,8 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40.r, color: AppColors.distanceText),
+            Icon(Icons.error_outline,
+                size: 40.r, color: AppColors.distanceText),
             SizedBox(height: 12.h),
             Text(
               message,
@@ -323,8 +330,9 @@ class _DropdownPill<T> extends StatelessWidget {
                 item.label,
                 style: TextStyle(
                   fontFamily: AppTypography.robotoFlex,
-                  fontVariations:
-                      item.value == value ? AppTypography.bold : AppTypography.regular,
+                  fontVariations: item.value == value
+                      ? AppTypography.bold
+                      : AppTypography.regular,
                   fontSize: 13.sp,
                   color: item.value == value
                       ? AppColors.primary

@@ -10,6 +10,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../routing/app_routes.dart';
+import '../../../../shared/helpers/show_toast.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../providers/help_request_provider.dart';
@@ -46,9 +47,8 @@ class DescribeIssueScreen extends HookConsumerWidget {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permission denied')),
-            );
+            showToast(context,
+                message: 'Location permission denied', status: 'error');
           }
           return;
         }
@@ -74,23 +74,23 @@ class DescribeIssueScreen extends HookConsumerWidget {
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           final parts = [p.street, p.locality, p.administrativeArea]
-              .where((e) => e != null && e!.isNotEmpty)
-              .map((e) => e!)
+              .whereType<String>()
+              .where((e) => e.isNotEmpty)
               .toList();
-          locationText.value =
-              parts.isNotEmpty ? parts.join(', ') : '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+          locationText.value = parts.isNotEmpty
+              ? parts.join(', ')
+              : '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
         } else {
           locationText.value =
               '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
         }
       } catch (_) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not fetch location')),
-          );
+          showToast(context,
+              message: 'Could not fetch location', status: 'error');
         }
       } finally {
-        isFetchingLocation.value = false;
+        if (context.mounted) isFetchingLocation.value = false;
       }
     }
 
@@ -140,6 +140,8 @@ class DescribeIssueScreen extends HookConsumerWidget {
                         final picker = ImagePicker();
                         final file = await picker.pickImage(
                           source: ImageSource.gallery,
+                          maxWidth: 1600,
+                          imageQuality: 85,
                         );
                         if (file != null) {
                           pickedImages.value = [...pickedImages.value, file];
@@ -186,8 +188,7 @@ class DescribeIssueScreen extends HookConsumerWidget {
                   _NextButton(
                     enabled: hasText.value,
                     onTap: () {
-                      final notifier =
-                          ref.read(helpRequestProvider.notifier);
+                      final notifier = ref.read(helpRequestProvider.notifier);
                       notifier.setDescription(controller.text.trim());
                       notifier.setLocation(
                         locationText.value,
@@ -384,7 +385,7 @@ class _UploadPhotoBox extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x40000000),
+              color: Color(0x1F000000),
               blurRadius: 4,
               offset: Offset(4, 4),
             ),
@@ -548,22 +549,22 @@ class _LocationField extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8.w),
-            isLoading
-                ? SizedBox(
-                    width: 18.r,
-                    height: 18.r,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
-                    ),
-                  )
-                : Icon(
-                    Icons.location_on_outlined,
-                    size: 22.r,
-                    color: location.isEmpty
-                        ? _kPlaceholderColor
-                        : AppColors.primary,
-                  ),
+            if (isLoading)
+              SizedBox(
+                width: 18.r,
+                height: 18.r,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              )
+            else
+              Icon(
+                Icons.location_on_outlined,
+                size: 22.r,
+                color:
+                    location.isEmpty ? _kPlaceholderColor : AppColors.primary,
+              ),
           ],
         ),
       ),
@@ -580,28 +581,35 @@ class _NextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: enabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.4),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: enabled
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Next',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: const Color(0xFFEEEEEE),
-            height: 20 / 16,
+          child: Center(
+            child: Text(
+              'Next',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: const Color(0xFFEEEEEE),
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),
@@ -617,25 +625,32 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary, width: 2),
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Back',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: AppColors.primary,
-            height: 20 / 16,
+    return Container(
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.primary, width: 2),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14.r),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14.r),
+          child: Center(
+            child: Text(
+              'Back',
+              style: TextStyle(
+                fontFamily: AppTypography.robotoFlex,
+                fontVariations: AppTypography.black,
+                fontWeight: FontWeight.w900,
+                fontSize: 16.sp,
+                color: AppColors.primary,
+                height: 20 / 16,
+              ),
+            ),
           ),
         ),
       ),

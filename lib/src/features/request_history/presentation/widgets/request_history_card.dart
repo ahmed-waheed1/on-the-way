@@ -20,8 +20,18 @@ class RequestHistoryCard extends StatelessWidget {
   final VoidCallback onViewDetails;
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String get _formattedDate =>
@@ -35,6 +45,13 @@ class RequestHistoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.requestHistoryCardBg,
         borderRadius: BorderRadius.circular(12.r),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,6 +92,8 @@ class RequestHistoryCard extends StatelessWidget {
                     SizedBox(height: 2.h),
                     Text(
                       item.location,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AppTypography.robotoFlex,
                         fontVariations: AppTypography.regular,
@@ -94,23 +113,30 @@ class RequestHistoryCard extends StatelessWidget {
           SizedBox(height: 16.h),
 
           // ── Divider ───────────────────────────────────────────────────────
-          const Divider(height: 1, thickness: 1, color: AppColors.requestCardDivider),
+          const Divider(
+              height: 1, thickness: 1, color: AppColors.requestCardDivider),
           SizedBox(height: 16.h),
 
           // ── View details ──────────────────────────────────────────────────
-          GestureDetector(
-            onTap: onViewDetails,
-            behavior: HitTestBehavior.opaque,
-            child: Center(
-              child: Text(
-                'View Details',
-                style: TextStyle(
-                  fontFamily: AppTypography.robotoFlex,
-                  fontVariations: AppTypography.bold,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12.sp,
-                  color: AppColors.viewDetailsLinkText,
-                  height: 20 / 12,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onViewDetails,
+              borderRadius: BorderRadius.circular(8.r),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Center(
+                  child: Text(
+                    'View Details',
+                    style: TextStyle(
+                      fontFamily: AppTypography.robotoFlex,
+                      fontVariations: AppTypography.bold,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp,
+                      color: AppColors.viewDetailsLinkText,
+                      height: 20 / 12,
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -15,7 +15,8 @@ const _kResendSeconds = 60;
 enum VerifyPurpose { verifyEmail, resetPassword }
 
 class VerifyAccountArgs {
-  const VerifyAccountArgs({required this.email, this.purpose = VerifyPurpose.verifyEmail});
+  const VerifyAccountArgs(
+      {required this.email, this.purpose = VerifyPurpose.verifyEmail});
   final String email;
   final VerifyPurpose purpose;
 }
@@ -70,8 +71,7 @@ class VerifyAccountScreen extends HookConsumerWidget {
     void onDigitChanged(int index, String value) {
       final ch = value.isEmpty ? '' : value.characters.last;
       controllers[index].text = ch;
-      controllers[index].selection =
-          TextSelection.collapsed(offset: ch.length);
+      controllers[index].selection = TextSelection.collapsed(offset: ch.length);
 
       final next = [...digits.value];
       next[index] = ch;
@@ -85,17 +85,19 @@ class VerifyAccountScreen extends HookConsumerWidget {
     }
 
     Future<void> resend() async {
-      if (secondsLeft.value != 0) return;
+      if (secondsLeft.value != 0 || isLoading) return;
       final controller = ref.read(authControllerProvider.notifier);
       if (purpose == VerifyPurpose.resetPassword) {
         await controller.forgetPassword(context: context, email: email);
+        if (!context.mounted) return;
+        secondsLeft.value = _kResendSeconds;
       } else {
-        // Re-trigger by asking the user to register again is not ideal; the API
-        // resends automatically on register. Just restart the timer for now.
-      }
-      secondsLeft.value = _kResendSeconds;
-      if (context.mounted) {
-        showToast(context, message: 'A new code has been sent', status: 'info');
+        // The API has no dedicated resend endpoint for email verification —
+        // registering again re-sends the code automatically.
+        secondsLeft.value = _kResendSeconds;
+        showToast(context,
+            message: 'Check your inbox — the code may take a minute to arrive',
+            status: 'info');
       }
     }
 
@@ -118,7 +120,9 @@ class VerifyAccountScreen extends HookConsumerWidget {
       );
       if (newPassword == null || newPassword.length < 6) {
         if (context.mounted && newPassword != null) {
-          showToast(context, message: 'Password must be at least 6 characters', status: 'error');
+          showToast(context,
+              message: 'Password must be at least 6 characters',
+              status: 'error');
         }
         return;
       }
@@ -195,12 +199,13 @@ class VerifyAccountScreen extends HookConsumerWidget {
                             ? Text.rich(
                                 TextSpan(
                                   children: [
-                                    const TextSpan(text: 'Re- send code via '),
+                                    const TextSpan(text: 'Resend code in '),
                                     TextSpan(
                                       text: '${secondsLeft.value}',
-                                      style: const TextStyle(color: _kTimerColor),
+                                      style:
+                                          const TextStyle(color: _kTimerColor),
                                     ),
-                                    const TextSpan(text: ' second'),
+                                    const TextSpan(text: 's'),
                                   ],
                                 ),
                                 style: TextStyle(
@@ -235,6 +240,7 @@ class VerifyAccountScreen extends HookConsumerWidget {
               padding: EdgeInsets.fromLTRB(27.w, 0, 27.w, 24.h),
               child: _VerifyButton(
                 enabled: isComplete && !isLoading,
+                isLoading: isLoading,
                 onTap: verify,
               ),
             ),
@@ -268,7 +274,7 @@ class _OtpBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(4.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x40000000),
+            color: Color(0x1F000000),
             blurRadius: 4,
             offset: Offset(0, 4),
           ),
@@ -281,6 +287,7 @@ class _OtpBox extends StatelessWidget {
         focusNode: focusNode,
         onChanged: onChanged,
         keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         textAlign: TextAlign.center,
         maxLength: 1,
         cursorColor: AppColors.primary,
@@ -305,35 +312,57 @@ class _OtpBox extends StatelessWidget {
 // ── Verify button ───────────────────────────────────────────────────────────────
 
 class _VerifyButton extends StatelessWidget {
-  const _VerifyButton({required this.enabled, required this.onTap});
+  const _VerifyButton({
+    required this.enabled,
+    required this.onTap,
+    this.isLoading = false,
+  });
 
   final bool enabled;
   final VoidCallback onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 48.h,
-        decoration: BoxDecoration(
-          color: enabled
-              ? AppColors.primary
-              : AppColors.primary.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'Verify',
-          style: TextStyle(
-            fontFamily: AppTypography.robotoFlex,
-            fontVariations: AppTypography.black,
-            fontWeight: FontWeight.w900,
-            fontSize: 16.sp,
-            color: Colors.white,
-            height: 20 / 16,
+    final radius = BorderRadius.circular(12.r);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: double.infinity,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: enabled || isLoading
+            ? AppColors.primary
+            : AppColors.primary.withValues(alpha: 0.4),
+        borderRadius: radius,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: radius,
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: 20.r,
+                    height: 20.r,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Verify',
+                    style: TextStyle(
+                      fontFamily: AppTypography.robotoFlex,
+                      fontVariations: AppTypography.black,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                      height: 20 / 16,
+                    ),
+                  ),
           ),
         ),
       ),

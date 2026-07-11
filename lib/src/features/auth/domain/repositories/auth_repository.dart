@@ -18,7 +18,8 @@ abstract class AuthRepository {
   FutureEither<void> verifyEmail({required String email, required String otp});
 
   /// Signs in with email + password, persisting the JWT.
-  FutureEither<AppUser> login({required String email, required String password});
+  FutureEither<AppUser> login(
+      {required String email, required String password});
 
   /// Signs in with a Google ID token.
   FutureEither<AppUser> googleLogin({required String idToken});

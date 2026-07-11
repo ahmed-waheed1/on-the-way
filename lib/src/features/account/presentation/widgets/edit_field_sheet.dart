@@ -70,9 +70,9 @@ class _EditFieldSheet extends HookWidget {
               top: 16.h,
               bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: ListView(
+              controller: scrollController,
+              shrinkWrap: true,
               children: [
                 // Drag handle
                 Center(
@@ -106,7 +106,9 @@ class _EditFieldSheet extends HookWidget {
                   maxLines: maxLines,
                   obscureText: obscure,
                   autofocus: true,
-                  textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
+                  textInputAction: maxLines > 1
+                      ? TextInputAction.newline
+                      : TextInputAction.done,
                 ),
                 SizedBox(height: 24.h),
 

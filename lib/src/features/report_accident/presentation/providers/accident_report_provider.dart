@@ -27,9 +27,11 @@ class AccidentReportDraft {
     this.phoneNumber = '',
   });
 
-  bool get isStepOneComplete => type != null && date != null && location.isNotEmpty;
+  bool get isStepOneComplete =>
+      type != null && date != null && location.isNotEmpty;
 
-  bool get isStepTwoComplete => description.isNotEmpty && phoneNumber.isNotEmpty;
+  bool get isStepTwoComplete =>
+      description.isNotEmpty && phoneNumber.isNotEmpty;
 
   AccidentReportDraft copyWith({
     AccidentType? type,
@@ -62,11 +64,15 @@ class AccidentReportNotifier extends StateNotifier<AccidentReportDraft> {
   void setType(AccidentType type) => state = state.copyWith(type: type);
   void setDate(DateTime date) => state = state.copyWith(date: date);
   void setLocation(String value, {double? latitude, double? longitude}) =>
-      state = state.copyWith(location: value, latitude: latitude, longitude: longitude);
-  void setDescription(String value) => state = state.copyWith(description: value);
+      state = state.copyWith(
+          location: value, latitude: latitude, longitude: longitude);
+  void setDescription(String value) =>
+      state = state.copyWith(description: value);
   void setImageCount(int count) => state = state.copyWith(imageCount: count);
-  void setImage(File image) => state = state.copyWith(image: image, imageCount: 1);
-  void setPhoneNumber(String value) => state = state.copyWith(phoneNumber: value);
+  void setImage(File image) =>
+      state = state.copyWith(image: image, imageCount: 1);
+  void setPhoneNumber(String value) =>
+      state = state.copyWith(phoneNumber: value);
   void reset() => state = const AccidentReportDraft();
 }
 
